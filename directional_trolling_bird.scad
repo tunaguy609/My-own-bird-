@@ -25,19 +25,10 @@ wide_depth  = 40;     // depth at widest station
 tail_depth  = 10;     // depth at tail
 
 /* [Lateral Wings] */
-// Root attachment spans X = wing_start_x (top/forward edge) to
-//   X = wing_end_x (bottom/rear edge), where they mould into the body.
-wing_start_x = 52;    // X of wing top edge at body  (= wide_x)
-wing_end_x   = 73;    // X of wing bottom edge at body
-// Edge lengths measured from body junction to wing tip:
-wing_top_len = 50;    // leading (top/forward) edge length
-wing_bot_len = 60;    // trailing (bottom/rear) edge length
-// Thickness along span:
-wing_root_t  = 4;     // thickness at body junction (mould-in)
-wing_mid_t   = 7;     // maximum thickness (at mid-span)
-wing_tip_t   = 4;     // thickness at tip
-// Planform angles:
-wing_fwd_angle = 8;   // degrees the leading face leans forward
+wing_start_x = 52;    // X position where wings attach (at widest section)
+wing_root_chord = 15; // root chord length at body (X direction)
+wing_length = 50;     // total length from body surface to wing tip
+wing_tip_y = 50;      // lateral distance from centerline to tip (Y direction)
 
 /* [Resolution] */
 $fn = 72;
@@ -119,149 +110,85 @@ module body_solid() {
 // ─────────────────────────────────────────────────────────────
 //  NOSE CAP
 //  A wedge/angular nose tip that tapers to a point.
-//  Occupies  X ∈ [-nose_depth, 0],  Z ∈ [-nose_depth, 0].
-//  Its flat rear face at X = 0 matches the body's nose cross-section
-//  (Y ∈ [-nose_width/2, nose_width/2],  Z ∈ [-nose_depth, 0]).
-//  Sharp point converges forward at X = -nose_depth.
 // ─────────────────────────────────────────────────────────────
 module nose_cap() {
     hw = nose_width / 2;
     d  = nose_depth;
     
-    // Build a wedge by sweeping from the rear cross-section to a point
     polyhedron(
         points = [
-            // Rear face (at X=0): the semi-ellipse profile
-            [0, hw, 0],           // right top (index 0)
-            [0, -hw, 0],          // left top (index 1)
-            [0, 0, -d],           // bottom belly (index 2)
-            // Front point (at X=-d): single point
-            [-d, 0, -d/2]         // tip converges at center (index 3)
+            [0, hw, 0],           // right top
+            [0, -hw, 0],          // left top
+            [0, 0, -d],           // bottom belly
+            [-d, 0, -d/2]         // tip point
         ],
         faces = [
-            // Rear face (looking back toward tail)
-            [0, 2, 1],            // semi-ellipse rear
-            // Top flat face (Y>0 side)
+            [0, 2, 1],            // rear face
             [0, 3, 2],            // right wedge
-            // Top flat face (Y<0 side)
             [1, 2, 3],            // left wedge
-            // Top surface (flat)
-            [1, 0, 3]             // connecting top
+            [1, 0, 3]             // top surface
         ]
     );
 }
 
 // ─────────────────────────────────────────────────────────────
-//  WING THICKNESS along normalised half-span  s ∈ [0, 1]
-//    s = 0 → root (at body edge)
-//    s = 1 → tip
-// ─────────────────────────────────────────────────────────────
-function wing_t(s) =
-    (s <= 0.5)
-    ? wing_root_t + (wing_mid_t - wing_root_t) * smoothstep(s / 0.5)
-    : wing_mid_t  + (wing_tip_t  - wing_mid_t)  * smoothstep((s - 0.5) / 0.5);
-
-// ─────────────────────────────────────────────────────────────
-//  SINGLE WING  (right-hand side, Y > 0)
-//
-//  Planform (top view):
-//    The root chord (at body edge, s=0) runs from X=wing_start_x to
-//    X=wing_end_x (21 mm root chord).
-//
-//    As the wing sweeps outboard:
-//      • Leading edge angles forward by wing_fwd_angle.
-//        Lateral span for leading edge = wing_top_len * cos(wing_fwd_angle).
-//      • Trailing edge sweeps rearward so that the trailing edge
-//        achieves wing_bot_len from root to tip.
-//    Both edges converge to the same lateral tip Y-position (hw_tip).
-//
-//  Cross-section orientation:
-//    Profile polygon is in the X-Z plane (chord direction × belly depth).
-//    rotate([90,0,0]) = Rx(90):
-//      2D_x → 3D_X  (chord, toward tail)  ✓
-//      2D_y → 3D_Z  (depth, negative = belly)  ✓
-//      extr.→ 3D_Y  (lateral span, centered on y_pos)  ✓
-//
-//  Thickness profile: 4 mm (root) → 7 mm (mid) → 4 mm (tip).
-//  Top is flush with flat top (Z = 0).
-//  Angular profile: flat leading edge, tapered belly, sharp trailing edge.
-// ──────────────────────────────────────────��──────────────────
-N_wing = 24;
-
-// Derived wing span geometry (computed from the edge-length parameters)
-// hw_root : body half-width at wing attachment
-// hw_tip  : lateral Y-coordinate of wing tip
-// dy      : lateral span = hw_tip - hw_root
-//
-// Leading edge has length wing_top_len angled at wing_fwd_angle forward:
-//   dy = wing_top_len * cos(wing_fwd_angle)
-//   dx_le = dy * tan(wing_fwd_angle)  (X swept forward)
-//
-// Trailing edge has length wing_bot_len from root (X=wing_end_x) to tip:
-//   dx_te = sqrt(wing_bot_len² - dy²)  (X swept rearward)
-//
-// Note: wing_bot_len must be ≥ dy for the geometry to be valid.
-// With the defaults: dy ≈ 49.5 mm, wing_bot_len = 60 mm → dx_te ≈ 33.9 mm.
-
-// ─────────────────────────────────────────────────────────────
-//  2D wing profile in local X-Z space:
-//    chord = wing chord length in X (trailing minus leading X)
-//    t     = leading-edge thickness (Z depth at leading edge)
-//    dz    = total belly depth at this span station
-//  Shape: flat top → angular belly → sharp trailing point
-// ────────────────────────────────���────────────────────────────
-module wing_profile_2d(chord, t, dz) {
-    pts = [
-        // flat top leading edge
-        [0, 0],
-        // flat top trailing edge
-        [chord, 0],
-        // trailing edge belly point (sharp convergence)
-        [chord, -dz],
-        // belly: angled from trailing down and back to near leading edge
-        [t * 0.3, -dz],
-        // leading edge bottom (angled belly)
-        [0, -t]
-    ];
-    polygon(pts);
-}
-
-module wing_cross_section(s, hw_root, hw_tip, dx_te) {
-    wafer  = 0.02;
-    dy     = hw_tip - hw_root;
-    y_pos  = hw_root + s * dy;   // lateral position at this span station
-
-    // Leading-edge X: sweeps forward as span increases
-    x_le = wing_start_x - (y_pos - hw_root) * tan(wing_fwd_angle);
-    // Trailing-edge X: sweeps rearward by dx_te over the full span
-    x_te = wing_end_x   + s * dx_te;
-
-    chord = x_te - x_le;
-    t     = wing_t(s);
-
-    // Belly depth: tapers from body depth at root to tip thickness at tip
-    dz = body_depth(wing_start_x) * (1 - s) + t * s;
-
-    translate([x_le, y_pos, 0])
-    rotate([90, 0, 0])          // orient profile in X-Z plane, extrude in Y
-    linear_extrude(height = wafer, center = true)
-        wing_profile_2d(chord, t, dz);
-}
-
+//  WING (single fin)
+//  Simple tapered fin from body surface to tip.
+//  50mm length measured from body surface.
+// ──────────────────────────────────────────────────���──────────
 module one_wing() {
-    hw_root = body_hw(wing_start_x);
-    // Lateral span from wing_top_len (leading-edge arc length and angle)
-    hw_tip  = hw_root + wing_top_len * cos(wing_fwd_angle);
-    dy      = hw_tip - hw_root;
-    // Trailing-edge X-sweep computed from wing_bot_len
-    dx_te   = sqrt(max(0, wing_bot_len * wing_bot_len - dy * dy));
-
+    hw_root = body_hw(wing_start_x);  // body half-width at attachment
+    d_root = body_depth(wing_start_x); // body depth at attachment
+    
+    N_wing = 16;  // cross-sections along the fin
+    
     for (i = [0 : N_wing - 2]) {
-        s0 = i       / (N_wing - 1);
-        s1 = (i + 1) / (N_wing - 1);
+        s = i / (N_wing - 1);           // 0 at root, 1 at tip
+        s_next = (i + 1) / (N_wing - 1);
+        
+        // Position along the 50mm wing length
+        // Tapers from body edge (hw_root) outward to tip
+        y_pos = hw_root + s * (wing_tip_y - hw_root);
+        y_next = hw_root + s_next * (wing_tip_y - hw_root);
+        
+        // Blend with body belly depth
+        z_pos = -d_root * (1 - s * 0.5);
+        z_next = -d_root * (1 - s_next * 0.5);
+        
+        // Slight X sweep along the chord
+        x_pos = wing_start_x + s * wing_root_chord * 0.4;
+        x_next = wing_start_x + s_next * wing_root_chord * 0.4;
+        
+        // Chord tapers with span
+        chord = wing_root_chord * (1 - s);
+        chord_next = wing_root_chord * (1 - s_next);
+        
+        // Thickness tapers
+        t = d_root * 0.4 * (1 - s);
+        t_next = d_root * 0.4 * (1 - s_next);
+        
         hull() {
-            wing_cross_section(s0, hw_root, hw_tip, dx_te);
-            wing_cross_section(s1, hw_root, hw_tip, dx_te);
+            // Current section: flat top, angled belly
+            translate([x_pos, y_pos, z_pos])
+            rotate([90, 0, 0])
+            linear_extrude(height = 0.02, center = true)
+                polygon([
+                    [0, 0],              // top leading
+                    [chord, 0],          // top trailing
+                    [chord * 0.8, -t],   // belly trailing
+                    [0, -t * 0.5]        // belly leading
+                ]);
+            
+            // Next section
+            translate([x_next, y_next, z_next])
+            rotate([90, 0, 0])
+            linear_extrude(height = 0.02, center = true)
+                polygon([
+                    [0, 0],
+                    [chord_next, 0],
+                    [chord_next * 0.8, -t_next],
+                    [0, -t_next * 0.5]
+                ]);
         }
     }
 }
