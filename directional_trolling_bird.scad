@@ -24,12 +24,11 @@ nose_depth  = 10;     // depth at nose tip
 wide_depth  = 40;     // depth at widest station
 tail_depth  = 10;     // depth at tail
 
-/* [Side Fin Wings] */
-wing_x_pos = 55;      // X position of wing attachment (along body)
-fin_span = 35;        // 35mm from body edge outward (Y direction)
-fin_height = 30;      // 30mm tall (Z direction, from top to bottom)
-fin_chord = 15;       // 15mm front-to-back (X direction)
-fin_thickness = 2;    // 2mm thin blade
+/* [Side Fins] */
+fin_x_pos = 55;       // X position of fin attachment (along body)
+fin_length = 35;      // length of fin (Y direction - outward from body)
+fin_height = 30;      // height of fin (Z direction - vertical)
+fin_thickness = 2;    // thickness of fin blade (X direction)
 
 /* [Resolution] */
 $fn = 72;
@@ -116,21 +115,24 @@ module nose_cap() {
     );
 }
 
+// ─────────────────────────────────────────────────────��───────
+//  SIMPLE RECTANGULAR SIDE FIN
+//  Just a flat rectangular blade extending outward from body
 // ─────────────────────────────────────────────────────────────
-//  SIDE FIN (thin vertical blade extending outward from body)
-//  Creates elegant side fins like a real trolling lure.
-// ─────────────────────────────────────────────────────────────
-module one_side_fin() {
-    hw = body_hw(wing_x_pos);
+module right_fin() {
+    hw = body_hw(fin_x_pos);
     
-    // Thin fin blade using hull of two tall narrow boxes
-    // Root: at body edge, minimal outward extension
-    translate([wing_x_pos, hw, 0])
-    cube([fin_chord, fin_thickness, -fin_height], center=false);
+    // Simple rectangular box: positioned at body edge, extends outward
+    translate([fin_x_pos, hw, 0])
+    cube([fin_thickness, fin_length, -fin_height], center=false);
+}
+
+module left_fin() {
+    hw = body_hw(fin_x_pos);
     
-    // Tip: extends outward by fin_span, tapers to point
-    translate([wing_x_pos + fin_chord*0.3, hw + fin_span*0.9, -fin_height*0.8])
-    cube([fin_chord*0.4, fin_thickness*0.5, fin_height*0.8], center=false);
+    // Mirror on Y axis
+    translate([fin_x_pos, -hw - fin_thickness, 0])
+    cube([fin_thickness, fin_length, -fin_height], center=false);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -139,14 +141,6 @@ module one_side_fin() {
 union() {
     body_solid();
     nose_cap();
-    
-    // Right side fin
-    hull() {
-        one_side_fin();
-    }
-    
-    // Left side fin (mirrored)
-    hull() {
-        mirror([0, 1, 0]) one_side_fin();
-    }
+    right_fin();
+    left_fin();
 }
