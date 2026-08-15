@@ -26,9 +26,9 @@ tail_depth  = 10;     // depth at tail
 
 /* [Side Wings] */
 wing_x_pos = 55;      // X position of wing attachment (along body)
-wing_span = 35;       // span of wing (Y direction - outward from body)
-wing_height = 30;     // height of wing (Z direction - vertical)
-wing_thickness = 2;   // thickness of wing blade (X direction)
+wing_span = 50;       // span of wing (Y direction - 50mm outward from body to tip)
+wing_height = 32;     // height of wing (Z direction - 32mm flat face)
+wing_thickness = 3;   // thickness of wing blade (X direction)
 
 /* [Resolution] */
 $fn = 72;
@@ -117,25 +117,25 @@ module nose_cap() {
 
 // ─────────────────────────────────────────────────────────────
 //  FLAT VERTICAL WINGS
-//  Rectangular blades extending straight out from body sides
-//  Flat face vertical, perpendicular to body
+//  Simple rectangular flat blades perpendicular to body
+//  50mm span outward, 32mm flat face height
 // ─────────────────────────────────────────────────────────────
 module right_wing() {
     hw = body_hw(wing_x_pos);
     
-    // Flat rectangular wing blade
-    // Starting at body edge, extending outward along Y
-    // Flat face vertical (extends in Z)
+    // Right wing: flat rectangular blade
+    // Attached at body edge, extends outward 50mm
+    // Flat face is 32mm tall
     translate([wing_x_pos, hw, 0])
-    cube([wing_thickness, wing_span, -wing_height], center=false);
+    cube([wing_thickness, wing_span, wing_height]);
 }
 
 module left_wing() {
     hw = body_hw(wing_x_pos);
     
-    // Mirror: start at left body edge, extend outward along -Y
-    translate([wing_x_pos, -hw - wing_span, 0])
-    cube([wing_thickness, wing_span, -wing_height], center=false);
+    // Left wing: mirror placement
+    translate([wing_x_pos, -(hw + wing_span), 0])
+    cube([wing_thickness, wing_span, wing_height]);
 }
 
 // ─────────────────────────────────────────────────────────────
