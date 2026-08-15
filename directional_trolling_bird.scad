@@ -25,9 +25,9 @@ wide_depth  = 40;     // depth at widest station
 tail_depth  = 10;     // depth at tail
 
 /* [Lateral Wings] */
-wing_start_x = 50;    // X position where wings start
-wing_end_x = 80;      // X position where wings end
-wing_span = 50;       // total span from body centerline to tip
+wing_x_pos = 55;      // X position of wing attachment (along body)
+wing_span = 50;       // 50mm from body edge to wing tip
+wing_chord = 20;      // 20mm chord length (X direction sweep)
 
 /* [Resolution] */
 $fn = 72;
@@ -40,8 +40,6 @@ function smoothstep(t) = let(c = clamp01(t)) c*c*(3 - 2*c);
 
 // ─────────────────────────────────────────────────────────────
 //  Body profile functions
-//  Nose section: uses linear interpolation for gradual taper
-//  Tail section: uses smoothstep for gentle transition
 // ─────────────────────────────────────────────────────────────
 
 // Half-width at longitudinal station x
@@ -62,21 +60,9 @@ function body_depth(x) =
 
 // ─────────────────────────────────────────────────────────────
 //  BODY MODULE
-//  Swept hull of flat-top / semi-ellipse cross-sections.
-//
-//  The 2D profile polygon (body_profile_2d) lives in a plane with:
-//    1st coord (+) → lateral width (maps to 3D +Y after rotation)
-//    2nd coord (-) → belly depth  (maps to 3D -Z after rotation)
-//
-//  rotate([90,0,90]) = Rz(90)·Rx(90) achieves:
-//    2D_x   → 3D_Y  (lateral)
-//    2D_y   → 3D_Z  (depth, negative = belly)
-//    extr.  → 3D_X  (along bird length)
 // ─────────────────────────────────────────────────────────────
 N_body = 64;
 
-//  2D semi-ellipse: arc from [hw,0] (right) to [-hw,0] (left) via [0,-d].
-//  Polygon auto-closes with the flat top edge: [-hw,0] → [hw,0].
 module body_profile_2d(hw, d) {
     N_arc = 36;
     polygon([
@@ -86,7 +72,6 @@ module body_profile_2d(hw, d) {
     ]);
 }
 
-//  Wafer-thin disc perpendicular to the X axis at station cx.
 module body_cross_section(cx, hw, d) {
     wafer = 0.02;
     translate([cx, 0, 0])
@@ -108,7 +93,6 @@ module body_solid() {
 
 // ─────────────────────────────────────────────────────────────
 //  NOSE CAP
-//  A wedge/angular nose tip that tapers to a point.
 // ─────────────────────────────────────────────────────────────
 module nose_cap() {
     hw = nose_width / 2;
@@ -116,78 +100,61 @@ module nose_cap() {
     
     polyhedron(
         points = [
-            [0, hw, 0],           // right top
-            [0, -hw, 0],          // left top
-            [0, 0, -d],           // bottom belly
-            [-d, 0, -d/2]         // tip point
+            [0, hw, 0],
+            [0, -hw, 0],
+            [0, 0, -d],
+            [-d, 0, -d/2]
         ],
         faces = [
-            [0, 2, 1],            // rear face
-            [0, 3, 2],            // right wedge
-            [1, 2, 3],            // left wedge
-            [1, 0, 3]             // top surface
+            [0, 2, 1],
+            [0, 3, 2],
+            [1, 2, 3],
+            [1, 0, 3]
         ]
     );
 }
 
 // ─────────────────────────────────────────────────────────────
-//  WING (single fin)
-//  Thin blade-like fin that spans laterally 50mm from body edge.
-//  Attaches along the body from wing_start_x to wing_end_x.
+//  WING (single blade fin)
+//  Simple flat triangular fin that tapers from root to point.
 // ─────────────────────────────────────────────────────────────
 module one_wing() {
-    N_wing_x = 12;   // sections along chord (X direction)
-    N_wing_y = 16;   // sections along span (Y direction)
+    hw = body_hw(wing_x_pos);
+    d = body_depth(wing_x_pos);
     
-    for (ix = [0 : N_wing_x - 2]) {
-        for (iy = [0 : N_wing_y - 2]) {
-            // X progression: along the body attachment
-            x0 = wing_start_x + (wing_end_x - wing_start_x) * ix / (N_wing_x - 1);
-            x1 = wing_start_x + (wing_end_x - wing_start_x) * (ix + 1) / (N_wing_x - 1);
+    // Wing vertices:
+    // Root: attachment line at body edge
+    // Tip: 50mm outward, tapers to point
+    
+    polyhedron(
+        points = [
+            // Root edge (at body, Y = hw)
+            [wing_x_pos, hw, 0],                    // 0: root top flat
+            [wing_x_pos + wing_chord, hw, 0],       // 1: root trailing top
+            [wing_x_pos + wing_chord, hw, -d*0.3],  // 2: root trailing belly
+            [wing_x_pos, hw, -d*0.2],                // 3: root leading belly
             
-            // Y progression: from body edge to tip (50mm span)
-            s0 = iy / (N_wing_y - 1);
-            s1 = (iy + 1) / (N_wing_y - 1);
+            // Tip point (50mm outward)
+            [wing_x_pos + wing_chord*0.5, hw + wing_span, -d*0.1]  // 4: tip point
+        ],
+        faces = [
+            // Top surface (flat)
+            [0, 1, 4],
             
-            hw0 = body_hw(x0);
-            hw1 = body_hw(x1);
-            d0 = body_depth(x0);
-            d1 = body_depth(x1);
+            // Belly surface (angled)
+            [2, 3, 4],
             
-            // Wing tip position
-            y_tip0 = hw0 + wing_span;
-            y_tip1 = hw1 + wing_span;
+            // Leading edge face
+            [0, 3, 4],
             
-            // Current positions along span
-            y0_start = hw0;
-            y0_end = hw0 + s0 * wing_span;
-            y1_start = hw1;
-            y1_end = hw1 + s1 * wing_span;
+            // Trailing edge face
+            [1, 4, 2],
             
-            // Blade thickness tapers: thick at root, thin at tip
-            thick0 = d0 * (1 - s0) * 0.3;
-            thick1 = d1 * (1 - s1) * 0.3;
-            
-            // Create small tetrahedron-like sections that sweep along the fin
-            hull() {
-                // Root section (at body)
-                translate([x0, y0_start, 0])
-                sphere(r = 0.5);
-                
-                // Tip section (at wing tip)
-                translate([x0, y0_end, -thick0 * 0.5])
-                sphere(r = 0.3);
-                
-                // Next X station root
-                translate([x1, y1_start, 0])
-                sphere(r = 0.5);
-                
-                // Next X station tip
-                translate([x1, y1_end, -thick1 * 0.5])
-                sphere(r = 0.3);
-            }
-        }
-    }
+            // Root edge (closes the fin)
+            [0, 4, 3],
+            [1, 2, 4]
+        ]
+    );
 }
 
 // ─────────────────────────────────────────────────────────────
