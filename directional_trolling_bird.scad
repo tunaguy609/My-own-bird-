@@ -118,28 +118,37 @@ module body_solid() {
 
 // ─────────────────────────────────────────────────────────────
 //  NOSE CAP
-//  A quarter-ellipsoid that rounds off the nose.
+//  A wedge/angular nose tip that tapers to a point.
 //  Occupies  X ∈ [-nose_depth, 0],  Z ∈ [-nose_depth, 0].
-//  Its flat face at X = 0 matches the body's nose cross-section
+//  Its flat rear face at X = 0 matches the body's nose cross-section
 //  (Y ∈ [-nose_width/2, nose_width/2],  Z ∈ [-nose_depth, 0]).
-//
-//  Construction in unit-sphere space, before rotate([0,90,0]):
-//    • World_X = local_z  →  local_z ≤ 0  keeps World_X ≤ 0
-//    • World_Z = -local_x →  local_x ≥ 0  keeps World_Z ≤ 0
-//  Clip to { local_x ≥ 0, local_z ≤ 0 } → quarter-sphere.
-//  Scale axes: X×nose_depth, Y×nose_width/2, Z×nose_depth.
+//  Sharp point converges forward at X = -nose_depth.
 // ─────────────────────────────────────────────────────────────
 module nose_cap() {
     hw = nose_width / 2;
     d  = nose_depth;
-    scale([d, hw, d])
-    rotate([0, 90, 0])
-    intersection() {
-        sphere(r = 1);
-        // Quarter-sphere clip: local_x ∈ [0,1], local_z ∈ [-1,0]
-        translate([0, -1.5, -1.5])
-            cube([1.5, 3, 1.5]);
-    }
+    
+    // Build a wedge by sweeping from the rear cross-section to a point
+    polyhedron(
+        points = [
+            // Rear face (at X=0): the semi-ellipse profile
+            [0, hw, 0],           // right top (index 0)
+            [0, -hw, 0],          // left top (index 1)
+            [0, 0, -d],           // bottom belly (index 2)
+            // Front point (at X=-d): single point
+            [-d, 0, -d/2]         // tip converges at center (index 3)
+        ],
+        faces = [
+            // Rear face (looking back toward tail)
+            [0, 2, 1],            // semi-ellipse rear
+            // Top flat face (Y>0 side)
+            [0, 3, 2],            // right wedge
+            // Top flat face (Y<0 side)
+            [1, 2, 3],            // left wedge
+            // Top surface (flat)
+            [1, 0, 3]             // connecting top
+        ]
+    );
 }
 
 // ─────────────────────────────────────────────────────────────
