@@ -50,15 +50,15 @@ function smoothstep(t) = let(c = clamp01(t)) c*c*(3 - 2*c);
 
 // ─────────────────────────────────────────────────────────────
 //  Body profile functions
-//  Both share the same smoothstep(t) convention:
-//    t = 0 at the anchor station, t = 1 at the far end.
+//  Nose section: uses linear interpolation for gradual taper
+//  Tail section: uses smoothstep for gentle transition
 // ─────────────────────────────────────────────────────────────
 
 // Half-width at longitudinal station x
 function body_hw(x) =
     (x <= wide_x)
     ? nose_width/2 + (max_width/2  - nose_width/2)
-        * smoothstep(x / wide_x)
+        * (x / wide_x)  // LINEAR taper from nose to widest point
     : max_width/2  + (tail_width/2 - max_width/2)
         * smoothstep((x - wide_x) / (total_length - wide_x));
 
@@ -66,7 +66,7 @@ function body_hw(x) =
 function body_depth(x) =
     (x <= wide_x)
     ? nose_depth + (wide_depth - nose_depth)
-        * smoothstep(x / wide_x)
+        * (x / wide_x)  // LINEAR taper from nose to widest point
     : wide_depth + (tail_depth - wide_depth)
         * smoothstep((x - wide_x) / (total_length - wide_x));
 
