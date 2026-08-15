@@ -39,6 +39,9 @@ wing_tip_t   = 4;     // thickness at tip
 // Planform angles:
 wing_fwd_angle = 8;   // degrees the leading face leans forward
 
+/* [Nose Tip] */
+nose_tip_radius = 1.5;  // radius of roundover on the nose tip edge
+
 /* [Resolution] */
 $fn = 72;
 
@@ -119,36 +122,71 @@ module body_solid() {
 // ─────────────────────────────────────────────────────────────
 //  NOSE CAP
 //  A wedge/angular nose tip that tapers to a point.
+//  The tip edge is rounded over with a small radius for a soft edge.
 //  Occupies  X ∈ [-nose_depth, 0],  Z ∈ [-nose_depth, 0].
 //  Its flat rear face at X = 0 matches the body's nose cross-section
 //  (Y ∈ [-nose_width/2, nose_width/2],  Z ∈ [-nose_depth, 0]).
-//  Sharp point converges forward at X = -nose_depth.
 // ─────────────────────────────────────────────────────────────
 module nose_cap() {
     hw = nose_width / 2;
     d  = nose_depth;
+    r  = nose_tip_radius;
     
-    // Build a wedge by sweeping from the rear cross-section to a point
-    polyhedron(
-        points = [
-            // Rear face (at X=0): the semi-ellipse profile
-            [0, hw, 0],           // right top (index 0)
-            [0, -hw, 0],          // left top (index 1)
-            [0, 0, -d],           // bottom belly (index 2)
-            // Front point (at X=-d): single point
-            [-d, 0, -d/2]         // tip converges at center (index 3)
-        ],
-        faces = [
-            // Rear face (looking back toward tail)
-            [0, 2, 1],            // semi-ellipse rear
-            // Top flat face (Y>0 side)
-            [0, 3, 2],            // right wedge
-            // Top flat face (Y<0 side)
-            [1, 2, 3],            // left wedge
-            // Top surface (flat)
-            [1, 0, 3]             // connecting top
-        ]
-    );
+    // Build a wedge with rounded tip edge using multiple cross-sections
+    // swept from rear to front, with the final section using a rounded profile
+    
+    N_nose = 16;  // number of cross-sections
+    
+    for (i = [0 : N_nose - 2]) {
+        // Interpolate from rear (t=0) to front (t=1)
+        t0 = i / (N_nose - 1);
+        t1 = (i + 1) / (N_nose - 1);
+        
+        // Position along X (negative, moving forward)
+        x0 = -d * t0;
+        x1 = -d * t1;
+        
+        // Width and depth taper linearly
+        hw0 = hw * (1 - t0);
+        hw1 = hw * (1 - t1);
+        d0 = d * (1 - t0);
+        d1 = d * (1 - t1);
+        
+        // Build cross-section profile: flat-top Y-Z ellipse
+        // At the front section (near tip), add rounded edge at the convergence
+        module nose_profile_2d(hw_sec, d_sec, is_tip) {
+            N_arc = 18;
+            if (is_tip) {
+                // Tip section: use smaller rounded profile instead of sharp point
+                polygon([
+                    for (i = [0 : N_arc])
+                        let(a = 180 * i / N_arc)
+                        [hw_sec * cos(a) + r * (1 - cos(a)),  
+                         -d_sec * sin(a) - r * (1 - sin(a))]
+                ]);
+            } else {
+                // Normal section: standard semi-ellipse
+                polygon([
+                    for (i = [0 : N_arc])
+                        let(a = 180 * i / N_arc)
+                        [hw_sec * cos(a),  -d_sec * sin(a)]
+                ]);
+            }
+        }
+        
+        // Create cross-section and hull to next one
+        hull() {
+            translate([x0, 0, 0])
+            rotate([90, 0, 90])
+            linear_extrude(height = 0.02, center = true)
+                nose_profile_2d(hw0, d0, false);
+            
+            translate([x1, 0, 0])
+            rotate([90, 0, 90])
+            linear_extrude(height = 0.02, center = true)
+                nose_profile_2d(hw1, d1, (i == N_nose - 2));  // is_tip for last section
+        }
+    }
 }
 
 // ─────────────────────────────────────────────────────────────
