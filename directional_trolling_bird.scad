@@ -184,8 +184,8 @@ function wing_t(s) =
 //
 //  Thickness profile: 4 mm (root) → 7 mm (mid) → 4 mm (tip).
 //  Top is flush with flat top (Z = 0).
-//  Rear face is convex/rounded; leading face is planar and angled forward.
-// ────────────────────────────────────��────────────────────────
+//  Angular profile: flat leading edge, tapered belly, sharp trailing edge.
+// ──────────────────────────────────────────��──────────────────
 N_wing = 24;
 
 // Derived wing span geometry (computed from the edge-length parameters)
@@ -208,28 +208,21 @@ N_wing = 24;
 //    chord = wing chord length in X (trailing minus leading X)
 //    t     = leading-edge thickness (Z depth at leading edge)
 //    dz    = total belly depth at this span station
-//  Shape: flat top → rounded convex rear → belly → angled leading face.
-// ─────────────────────────────────────────────────────────────
+//  Shape: flat top → angular belly → sharp trailing point
+// ────────────────────────────────���────────────────────────────
 module wing_profile_2d(chord, t, dz) {
-    N_rear = 16;
-    rear_r = chord * 0.12;    // radius of convex rear-corner arc
-
-    pts = concat(
-        // flat top: leading edge to trailing edge
-        [[0, 0],  [chord, 0]],
-        // convex rear arc from trailing top corner sweeping to trailing belly
-        [for (i = [1 : N_rear - 1])
-            let(a = 90 * i / N_rear)
-            [chord - rear_r * (1 - cos(a)),
-             -dz * sin(a)]
-        ],
-        // trailing edge belly corner
-        [[chord - rear_r,  -dz]],
-        // belly: flat run from trailing to just below leading edge
-        [[rear_r * 0.5,    -dz]],
-        // leading edge bottom (angled forward face)
-        [[0, -t]]
-    );
+    pts = [
+        // flat top leading edge
+        [0, 0],
+        // flat top trailing edge
+        [chord, 0],
+        // trailing edge belly point (sharp convergence)
+        [chord, -dz],
+        // belly: angled from trailing down and back to near leading edge
+        [t * 0.3, -dz],
+        // leading edge bottom (angled belly)
+        [0, -t]
+    ];
     polygon(pts);
 }
 
