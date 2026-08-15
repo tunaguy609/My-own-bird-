@@ -116,19 +116,22 @@ module nose_cap() {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  WING (horizontal blade extending from body side)
-//  Wings extend perpendicular to body (along +Y), level with body top.
+//  WING (vertical blade extending from body side)
+//  Wings extend perpendicular to body (along +Y), stand up vertically.
 // ─────────────────────────────────────────────────────────────
 module one_wing() {
     hw = body_hw(wing_x_pos);
+    d = body_depth(wing_x_pos);
     
-    // Root slab: at body edge, extends along X (chord)
-    translate([wing_x_pos, hw, -wing_thickness/2])
-    cube([wing_chord, 0.1, wing_thickness], center=false);
+    // Root slab: at body edge, extends along X (chord), rotated to vertical
+    translate([wing_x_pos, hw, 0])
+    rotate([90, 0, 0])
+    cube([wing_chord, wing_thickness, 0.1], center=false);
     
-    // Tip slab: extends outward (along +Y) by wing_span, smaller in X
-    translate([wing_x_pos + wing_chord*0.2, hw, -wing_thickness/2])
-    cube([wing_chord*0.6, wing_span, wing_thickness*0.7], center=false);
+    // Tip slab: extends outward (along +Y) by wing_span, stands up vertically
+    translate([wing_x_pos + wing_chord*0.2, hw, -d*0.5])
+    rotate([90, 0, 0])
+    cube([wing_chord*0.6, wing_thickness*0.7, wing_span], center=false);
 }
 
 // ─────────────────────────────────────────────────────────────
