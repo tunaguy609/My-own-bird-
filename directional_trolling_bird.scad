@@ -26,7 +26,7 @@ tail_depth  = 10;     // depth at tail
 
 /* [Lateral Wings] */
 wing_x_pos = 55;      // X position of wing attachment (along body)
-wing_span = 50;       // 50mm from body edge to wing tip
+wing_height = 50;     // 50mm height from body top to wing tip
 wing_chord = 20;      // 20mm chord length (X direction sweep)
 wing_thickness = 2;   // thickness of wing blade
 
@@ -116,22 +116,19 @@ module nose_cap() {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  WING (vertical blade extending from body side)
-//  Wings extend perpendicular to body (along +Y), stand up vertically.
+//  WING (vertical blade extending up from body side)
+//  Uses hull of two tall boxes: root at body, tip extends upward
 // ─────────────────────────────────────────────────────────────
 module one_wing() {
     hw = body_hw(wing_x_pos);
-    d = body_depth(wing_x_pos);
     
-    // Root slab: at body edge, extends along X (chord), rotated to vertical
-    translate([wing_x_pos, hw, 0])
-    rotate([90, 0, 0])
+    // Root box: at body edge, extends along X (chord), stands up vertically
+    translate([wing_x_pos, hw - wing_thickness/2, 0])
     cube([wing_chord, wing_thickness, 0.1], center=false);
     
-    // Tip slab: extends outward (along +Y) by wing_span, stands up vertically
-    translate([wing_x_pos + wing_chord*0.2, hw, -d*0.5])
-    rotate([90, 0, 0])
-    cube([wing_chord*0.6, wing_thickness*0.7, wing_span], center=false);
+    // Tip box: extends upward (along +Z), tapers narrower in X
+    translate([wing_x_pos + wing_chord*0.2, hw - wing_thickness*0.35, -wing_height])
+    cube([wing_chord*0.6, wing_thickness*0.7, wing_height], center=false);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -141,7 +138,7 @@ union() {
     body_solid();
     nose_cap();
     
-    // Right wing
+    // Right wing - hull of root and tip creates vertical blade
     hull() {
         one_wing();
     }
