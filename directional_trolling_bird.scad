@@ -25,10 +25,9 @@ wide_depth  = 40;     // depth at widest station
 tail_depth  = 10;     // depth at tail
 
 /* [Lateral Wings] */
-wing_start_x = 52;    // X position where wings attach (at widest section)
-wing_root_chord = 15; // root chord length at body (X direction)
-wing_length = 50;     // total length from body surface to wing tip
-wing_tip_y = 50;      // lateral distance from centerline to tip (Y direction)
+wing_start_x = 50;    // X position where wings start
+wing_end_x = 80;      // X position where wings end
+wing_span = 50;       // total span from body centerline to tip
 
 /* [Resolution] */
 $fn = 72;
@@ -133,62 +132,60 @@ module nose_cap() {
 
 // ─────────────────────────────────────────────────────────────
 //  WING (single fin)
-//  Simple tapered fin from body surface to tip.
-//  50mm length measured from body surface.
-// ──────────────────────────────────────────────────���──────────
+//  Thin blade-like fin that spans laterally 50mm from body edge.
+//  Attaches along the body from wing_start_x to wing_end_x.
+// ─────────────────────────────────────────────────────────────
 module one_wing() {
-    hw_root = body_hw(wing_start_x);  // body half-width at attachment
-    d_root = body_depth(wing_start_x); // body depth at attachment
+    N_wing_x = 12;   // sections along chord (X direction)
+    N_wing_y = 16;   // sections along span (Y direction)
     
-    N_wing = 16;  // cross-sections along the fin
-    
-    for (i = [0 : N_wing - 2]) {
-        s = i / (N_wing - 1);           // 0 at root, 1 at tip
-        s_next = (i + 1) / (N_wing - 1);
-        
-        // Position along the 50mm wing length
-        // Tapers from body edge (hw_root) outward to tip
-        y_pos = hw_root + s * (wing_tip_y - hw_root);
-        y_next = hw_root + s_next * (wing_tip_y - hw_root);
-        
-        // Blend with body belly depth
-        z_pos = -d_root * (1 - s * 0.5);
-        z_next = -d_root * (1 - s_next * 0.5);
-        
-        // Slight X sweep along the chord
-        x_pos = wing_start_x + s * wing_root_chord * 0.4;
-        x_next = wing_start_x + s_next * wing_root_chord * 0.4;
-        
-        // Chord tapers with span
-        chord = wing_root_chord * (1 - s);
-        chord_next = wing_root_chord * (1 - s_next);
-        
-        // Thickness tapers
-        t = d_root * 0.4 * (1 - s);
-        t_next = d_root * 0.4 * (1 - s_next);
-        
-        hull() {
-            // Current section: flat top, angled belly
-            translate([x_pos, y_pos, z_pos])
-            rotate([90, 0, 0])
-            linear_extrude(height = 0.02, center = true)
-                polygon([
-                    [0, 0],              // top leading
-                    [chord, 0],          // top trailing
-                    [chord * 0.8, -t],   // belly trailing
-                    [0, -t * 0.5]        // belly leading
-                ]);
+    for (ix = [0 : N_wing_x - 2]) {
+        for (iy = [0 : N_wing_y - 2]) {
+            // X progression: along the body attachment
+            x0 = wing_start_x + (wing_end_x - wing_start_x) * ix / (N_wing_x - 1);
+            x1 = wing_start_x + (wing_end_x - wing_start_x) * (ix + 1) / (N_wing_x - 1);
             
-            // Next section
-            translate([x_next, y_next, z_next])
-            rotate([90, 0, 0])
-            linear_extrude(height = 0.02, center = true)
-                polygon([
-                    [0, 0],
-                    [chord_next, 0],
-                    [chord_next * 0.8, -t_next],
-                    [0, -t_next * 0.5]
-                ]);
+            // Y progression: from body edge to tip (50mm span)
+            s0 = iy / (N_wing_y - 1);
+            s1 = (iy + 1) / (N_wing_y - 1);
+            
+            hw0 = body_hw(x0);
+            hw1 = body_hw(x1);
+            d0 = body_depth(x0);
+            d1 = body_depth(x1);
+            
+            // Wing tip position
+            y_tip0 = hw0 + wing_span;
+            y_tip1 = hw1 + wing_span;
+            
+            // Current positions along span
+            y0_start = hw0;
+            y0_end = hw0 + s0 * wing_span;
+            y1_start = hw1;
+            y1_end = hw1 + s1 * wing_span;
+            
+            // Blade thickness tapers: thick at root, thin at tip
+            thick0 = d0 * (1 - s0) * 0.3;
+            thick1 = d1 * (1 - s1) * 0.3;
+            
+            // Create small tetrahedron-like sections that sweep along the fin
+            hull() {
+                // Root section (at body)
+                translate([x0, y0_start, 0])
+                sphere(r = 0.5);
+                
+                // Tip section (at wing tip)
+                translate([x0, y0_end, -thick0 * 0.5])
+                sphere(r = 0.3);
+                
+                // Next X station root
+                translate([x1, y1_start, 0])
+                sphere(r = 0.5);
+                
+                // Next X station tip
+                translate([x1, y1_end, -thick1 * 0.5])
+                sphere(r = 0.3);
+            }
         }
     }
 }
