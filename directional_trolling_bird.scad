@@ -28,6 +28,7 @@ tail_depth  = 10;     // depth at tail
 wing_x_pos = 55;      // X position of wing attachment (along body)
 wing_span = 50;       // 50mm from body edge to wing tip
 wing_chord = 20;      // 20mm chord length (X direction sweep)
+wing_thickness = 3;   // thickness of wing blade
 
 /* [Resolution] */
 $fn = 72;
@@ -115,46 +116,20 @@ module nose_cap() {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  WING (single blade fin using polyhedron)
-//  Creates a proper side fin extending from the body edge.
+//  WING (horizontal blade using hull of two thin boxes)
+//  Creates wings that extend horizontally from body sides.
 // ─────────────────────────────────────────────────────────────
 module one_wing() {
     hw = body_hw(wing_x_pos);
-    d = body_depth(wing_x_pos);
     
-    // Wing vertices (proper XYZ coordinates):
-    // Root edge: at body edge, Y = hw
-    // Tip: extends 50mm outward (Y = hw + 50), tapers to point
+    // Hull of two thin rectangular slabs creates a tapered blade
+    // Root slab (at body edge)
+    translate([wing_x_pos, hw, -wing_thickness/2])
+    cube([wing_chord, wing_thickness, wing_thickness], center=false);
     
-    polyhedron(
-        points = [
-            // Root edge (at body, Y = hw, Z = 0 to -d)
-            [wing_x_pos, hw, 0],                      // 0: root leading top
-            [wing_x_pos + wing_chord, hw, 0],         // 1: root trailing top
-            [wing_x_pos + wing_chord, hw, -d*0.2],    // 2: root trailing belly
-            [wing_x_pos, hw, -d*0.1],                 // 3: root leading belly
-            
-            // Tip point (extends laterally 50mm)
-            [wing_x_pos + wing_chord*0.5, hw + wing_span, -d*0.05]  // 4: tip apex
-        ],
-        faces = [
-            // Top surface (flat)
-            [0, 1, 4],
-            
-            // Belly surface
-            [2, 3, 4],
-            
-            // Leading edge
-            [0, 3, 4],
-            
-            // Trailing edge
-            [1, 4, 2],
-            
-            // Root closing
-            [0, 4, 3],
-            [1, 2, 4]
-        ]
-    );
+    // Tip slab (extends outward, tapers to narrower)
+    translate([wing_x_pos + wing_chord*0.3, hw + wing_span*0.8, -wing_thickness/2])
+    cube([wing_chord*0.4, wing_thickness, wing_thickness*0.5], center=false);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -163,6 +138,10 @@ module one_wing() {
 union() {
     body_solid();
     nose_cap();
-    one_wing();
-    mirror([0, 1, 0]) one_wing();
+    hull() {
+        one_wing();
+    }
+    hull() {
+        mirror([0, 1, 0]) one_wing();
+    }
 }
