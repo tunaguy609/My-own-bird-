@@ -24,11 +24,11 @@ nose_depth  = 10;     // depth at nose tip
 wide_depth  = 40;     // depth at widest station
 tail_depth  = 10;     // depth at tail
 
-/* [Side Fins] */
-fin_x_pos = 55;       // X position of fin attachment (along body)
-fin_length = 35;      // length of fin (Y direction - outward from body)
-fin_height = 30;      // height of fin (Z direction - vertical)
-fin_thickness = 2;    // thickness of fin blade (X direction)
+/* [Side Wings] */
+wing_x_pos = 55;      // X position of wing attachment (along body)
+wing_span = 35;       // span of wing (Y direction - outward from body)
+wing_height = 30;     // height of wing (Z direction - vertical)
+wing_thickness = 2;   // thickness of wing blade (X direction)
 
 /* [Resolution] */
 $fn = 72;
@@ -115,24 +115,27 @@ module nose_cap() {
     );
 }
 
-// ─────────────────────────────────────────────────────��───────
-//  SIMPLE RECTANGULAR SIDE FIN
-//  Just a flat rectangular blade extending outward from body
 // ─────────────────────────────────────────────────────────────
-module right_fin() {
-    hw = body_hw(fin_x_pos);
+//  FLAT VERTICAL WINGS
+//  Rectangular blades extending straight out from body sides
+//  Flat face vertical, perpendicular to body
+// ─────────────────────────────────────────────────────────────
+module right_wing() {
+    hw = body_hw(wing_x_pos);
     
-    // Simple rectangular box: positioned at body edge, extends outward
-    translate([fin_x_pos, hw, 0])
-    cube([fin_thickness, fin_length, -fin_height], center=false);
+    // Flat rectangular wing blade
+    // Starting at body edge, extending outward along Y
+    // Flat face vertical (extends in Z)
+    translate([wing_x_pos, hw, 0])
+    cube([wing_thickness, wing_span, -wing_height], center=false);
 }
 
-module left_fin() {
-    hw = body_hw(fin_x_pos);
+module left_wing() {
+    hw = body_hw(wing_x_pos);
     
-    // Mirror on Y axis
-    translate([fin_x_pos, -hw - fin_thickness, 0])
-    cube([fin_thickness, fin_length, -fin_height], center=false);
+    // Mirror: start at left body edge, extend outward along -Y
+    translate([wing_x_pos, -hw - wing_span, 0])
+    cube([wing_thickness, wing_span, -wing_height], center=false);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -141,6 +144,6 @@ module left_fin() {
 union() {
     body_solid();
     nose_cap();
-    right_fin();
-    left_fin();
+    right_wing();
+    left_wing();
 }
