@@ -115,28 +115,46 @@ module nose_cap() {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  WING (single blade fin)
-//  2D wing profile extruded along Z, then rotated into position.
+//  WING (single blade fin using polyhedron)
+//  Creates a proper side fin extending from the body edge.
 // ─────────────────────────────────────────────────────────────
 module one_wing() {
     hw = body_hw(wing_x_pos);
     d = body_depth(wing_x_pos);
     
-    // 2D wing profile in X-Y plane (chord x span):
-    // X: 0 to wing_chord (swept along body length)
-    // Y: 0 to wing_span (extends laterally from body edge)
-    wing_profile_2d = [
-        [0, 0],                    // root at body edge
-        [wing_chord, 0],           // trailing at body edge
-        [wing_chord * 0.7, wing_span],  // trailing at tip
-        [0, wing_span]             // leading at tip
-    ];
+    // Wing vertices (proper XYZ coordinates):
+    // Root edge: at body edge, Y = hw
+    // Tip: extends 50mm outward (Y = hw + 50), tapers to point
     
-    // Create 2D profile extruded in Z, then rotate to position on body side
-    translate([wing_x_pos, hw, 0])
-    rotate([90, 0, 0])
-    linear_extrude(height = d * 0.15, center = false)
-        polygon(wing_profile_2d);
+    polyhedron(
+        points = [
+            // Root edge (at body, Y = hw, Z = 0 to -d)
+            [wing_x_pos, hw, 0],                      // 0: root leading top
+            [wing_x_pos + wing_chord, hw, 0],         // 1: root trailing top
+            [wing_x_pos + wing_chord, hw, -d*0.2],    // 2: root trailing belly
+            [wing_x_pos, hw, -d*0.1],                 // 3: root leading belly
+            
+            // Tip point (extends laterally 50mm)
+            [wing_x_pos + wing_chord*0.5, hw + wing_span, -d*0.05]  // 4: tip apex
+        ],
+        faces = [
+            // Top surface (flat)
+            [0, 1, 4],
+            
+            // Belly surface
+            [2, 3, 4],
+            
+            // Leading edge
+            [0, 3, 4],
+            
+            // Trailing edge
+            [1, 4, 2],
+            
+            // Root closing
+            [0, 4, 3],
+            [1, 2, 4]
+        ]
+    );
 }
 
 // ─────────────────────────────────────────────────────────────
