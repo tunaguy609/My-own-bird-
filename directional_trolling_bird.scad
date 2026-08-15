@@ -123,69 +123,51 @@ module body_solid() {
 //  NOSE CAP
 //  A wedge/angular nose tip that tapers to a point.
 //  The tip edge is rounded over with a small radius for a soft edge.
-//  Occupies  X ∈ [-nose_depth, 0],  Z ∈ [-nose_depth, 0].
-//  Its flat rear face at X = 0 matches the body's nose cross-section
-//  (Y ∈ [-nose_width/2, nose_width/2],  Z ∈ [-nose_depth, 0]).
+//  Uses Minkowski sum with a small sphere to create smooth roundover.
 // ─────────────────────────────────────────────────────────────
 module nose_cap() {
     hw = nose_width / 2;
     d  = nose_depth;
     r  = nose_tip_radius;
     
-    // Build a wedge with rounded tip edge using multiple cross-sections
-    // swept from rear to front, with the final section using a rounded profile
+    N_nose = 12;  // number of cross-sections
     
-    N_nose = 16;  // number of cross-sections
-    
-    for (i = [0 : N_nose - 2]) {
-        // Interpolate from rear (t=0) to front (t=1)
-        t0 = i / (N_nose - 1);
-        t1 = (i + 1) / (N_nose - 1);
-        
-        // Position along X (negative, moving forward)
-        x0 = -d * t0;
-        x1 = -d * t1;
-        
-        // Width and depth taper linearly
-        hw0 = hw * (1 - t0);
-        hw1 = hw * (1 - t1);
-        d0 = d * (1 - t0);
-        d1 = d * (1 - t1);
-        
-        // Build cross-section profile: flat-top Y-Z ellipse
-        // At the front section (near tip), add rounded edge at the convergence
-        module nose_profile_2d(hw_sec, d_sec, is_tip) {
-            N_arc = 18;
-            if (is_tip) {
-                // Tip section: use smaller rounded profile instead of sharp point
-                polygon([
-                    for (i = [0 : N_arc])
-                        let(a = 180 * i / N_arc)
-                        [hw_sec * cos(a) + r * (1 - cos(a)),  
-                         -d_sec * sin(a) - r * (1 - sin(a))]
-                ]);
-            } else {
-                // Normal section: standard semi-ellipse
-                polygon([
-                    for (i = [0 : N_arc])
-                        let(a = 180 * i / N_arc)
-                        [hw_sec * cos(a),  -d_sec * sin(a)]
-                ]);
+    minkowski() {
+        union() {
+            for (i = [0 : N_nose - 2]) {
+                t0 = i / (N_nose - 1);
+                t1 = (i + 1) / (N_nose - 1);
+                
+                x0 = -d * t0;
+                x1 = -d * t1;
+                
+                hw0 = hw * (1 - t0);
+                hw1 = hw * (1 - t1);
+                d0 = d * (1 - t0);
+                d1 = d * (1 - t1);
+                
+                hull() {
+                    translate([x0, 0, 0])
+                    rotate([90, 0, 90])
+                    linear_extrude(height = 0.02, center = true)
+                        polygon([
+                            for (j = [0 : 18])
+                                let(a = 180 * j / 18)
+                                [hw0 * cos(a), -d0 * sin(a)]
+                        ]);
+                    
+                    translate([x1, 0, 0])
+                    rotate([90, 0, 90])
+                    linear_extrude(height = 0.02, center = true)
+                        polygon([
+                            for (j = [0 : 18])
+                                let(a = 180 * j / 18)
+                                [hw1 * cos(a), -d1 * sin(a)]
+                        ]);
+                }
             }
         }
-        
-        // Create cross-section and hull to next one
-        hull() {
-            translate([x0, 0, 0])
-            rotate([90, 0, 90])
-            linear_extrude(height = 0.02, center = true)
-                nose_profile_2d(hw0, d0, false);
-            
-            translate([x1, 0, 0])
-            rotate([90, 0, 90])
-            linear_extrude(height = 0.02, center = true)
-                nose_profile_2d(hw1, d1, (i == N_nose - 2));  // is_tip for last section
-        }
+        sphere(r = r);
     }
 }
 
@@ -241,7 +223,7 @@ N_wing = 24;
 // Note: wing_bot_len must be ≥ dy for the geometry to be valid.
 // With the defaults: dy ≈ 49.5 mm, wing_bot_len = 60 mm → dx_te ≈ 33.9 mm.
 
-// ─────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────���──────────────
 //  2D wing profile in local X-Z space:
 //    chord = wing chord length in X (trailing minus leading X)
 //    t     = leading-edge thickness (Z depth at leading edge)
