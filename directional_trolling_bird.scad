@@ -39,9 +39,6 @@ wing_tip_t   = 4;     // thickness at tip
 // Planform angles:
 wing_fwd_angle = 8;   // degrees the leading face leans forward
 
-/* [Nose Tip] */
-nose_tip_radius = 0.5;  // radius of light roundover on the nose tip edge
-
 /* [Resolution] */
 $fn = 72;
 
@@ -51,7 +48,7 @@ $fn = 72;
 function clamp01(t)    = max(0, min(1, t));
 function smoothstep(t) = let(c = clamp01(t)) c*c*(3 - 2*c);
 
-// ─────────────────────────────────────────────────────────────
+// ──────────��──────────────────────────────────────────────────
 //  Body profile functions
 //  Nose section: uses linear interpolation for gradual taper
 //  Tail section: uses smoothstep for gentle transition
@@ -73,7 +70,7 @@ function body_depth(x) =
     : wide_depth + (tail_depth - wide_depth)
         * smoothstep((x - wide_x) / (total_length - wide_x));
 
-// ──────────────────────���──────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 //  BODY MODULE
 //  Swept hull of flat-top / semi-ellipse cross-sections.
 //
@@ -121,52 +118,27 @@ module body_solid() {
 
 // ─────────────────────────────────────────────────────────────
 //  NOSE CAP
-//  A wedge/angular nose tip that tapers to a point.
-//  Light roundover on tip edge using minimal Minkowski radius.
+//  A quarter-ellipsoid that rounds off the nose.
+//  Occupies  X ∈ [-nose_depth, 0],  Z ∈ [-nose_depth, 0].
+//  Its flat face at X = 0 matches the body's nose cross-section
+//  (Y ∈ [-nose_width/2, nose_width/2],  Z ∈ [-nose_depth, 0]).
+//
+//  Construction in unit-sphere space, before rotate([0,90,0]):
+//    • World_X = local_z  →  local_z ≤ 0  keeps World_X ≤ 0
+//    • World_Z = -local_x →  local_x ≥ 0  keeps World_Z ≤ 0
+//  Clip to { local_x ≥ 0, local_z ≤ 0 } → quarter-sphere.
+//  Scale axes: X×nose_depth, Y×nose_width/2, Z×nose_depth.
 // ─────────────────────────────────────────────────────────────
 module nose_cap() {
     hw = nose_width / 2;
     d  = nose_depth;
-    r  = nose_tip_radius;
-    
-    N_nose = 12;  // number of cross-sections
-    
-    minkowski() {
-        union() {
-            for (i = [0 : N_nose - 2]) {
-                t0 = i / (N_nose - 1);
-                t1 = (i + 1) / (N_nose - 1);
-                
-                x0 = -d * t0;
-                x1 = -d * t1;
-                
-                hw0 = hw * (1 - t0);
-                hw1 = hw * (1 - t1);
-                d0 = d * (1 - t0);
-                d1 = d * (1 - t1);
-                
-                hull() {
-                    translate([x0, 0, 0])
-                    rotate([90, 0, 90])
-                    linear_extrude(height = 0.02, center = true)
-                        polygon([
-                            for (j = [0 : 18])
-                                let(a = 180 * j / 18)
-                                [hw0 * cos(a), -d0 * sin(a)]
-                        ]);
-                    
-                    translate([x1, 0, 0])
-                    rotate([90, 0, 90])
-                    linear_extrude(height = 0.02, center = true)
-                        polygon([
-                            for (j = [0 : 18])
-                                let(a = 180 * j / 18)
-                                [hw1 * cos(a), -d1 * sin(a)]
-                        ]);
-                }
-            }
-        }
-        sphere(r = r);
+    scale([d, hw, d])
+    rotate([0, 90, 0])
+    intersection() {
+        sphere(r = 1);
+        // Quarter-sphere clip: local_x ∈ [0,1], local_z ∈ [-1,0]
+        translate([0, -1.5, -1.5])
+            cube([1.5, 3, 1.5]);
     }
 }
 
@@ -174,7 +146,7 @@ module nose_cap() {
 //  WING THICKNESS along normalised half-span  s ∈ [0, 1]
 //    s = 0 → root (at body edge)
 //    s = 1 → tip
-// ──────���──────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 function wing_t(s) =
     (s <= 0.5)
     ? wing_root_t + (wing_mid_t - wing_root_t) * smoothstep(s / 0.5)
@@ -222,7 +194,7 @@ N_wing = 24;
 // Note: wing_bot_len must be ≥ dy for the geometry to be valid.
 // With the defaults: dy ≈ 49.5 mm, wing_bot_len = 60 mm → dx_te ≈ 33.9 mm.
 
-// ──────────────────────────────────────────────────────────��──
+// ─────────────────────────────────────────────────────────────
 //  2D wing profile in local X-Z space:
 //    chord = wing chord length in X (trailing minus leading X)
 //    t     = leading-edge thickness (Z depth at leading edge)
@@ -292,7 +264,7 @@ module one_wing() {
     }
 }
 
-// ───────────────��─────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 //  ASSEMBLY
 // ─────────────────────────────────────────────────────────────
 union() {
