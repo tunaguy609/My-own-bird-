@@ -116,26 +116,26 @@ module nose_cap() {
 
 // ─────────────────────────────────────────────────────────────
 //  WING (single blade fin)
-//  2D wing profile in Y-Z plane, extruded along X.
+//  2D wing profile extruded along Z, then rotated into position.
 // ─────────────────────────────────────────────────────────────
 module one_wing() {
     hw = body_hw(wing_x_pos);
     d = body_depth(wing_x_pos);
     
-    // 2D wing profile in Y-Z plane (lateral x depth):
-    // Y: 0 at body edge, wing_span at tip
-    // Z: 0 at flat top, negative at belly
+    // 2D wing profile in X-Y plane (chord x span):
+    // X: 0 to wing_chord (swept along body length)
+    // Y: 0 to wing_span (extends laterally from body edge)
     wing_profile_2d = [
-        [0, 0],                    // root top (at body)
-        [wing_span, 0],            // tip top
-        [wing_span * 0.8, -d * 0.15],  // tip belly
-        [0, -d * 0.1]              // root belly
+        [0, 0],                    // root at body edge
+        [wing_chord, 0],           // trailing at body edge
+        [wing_chord * 0.7, wing_span],  // trailing at tip
+        [0, wing_span]             // leading at tip
     ];
     
-    // Position at body edge and extrude along X (chord)
+    // Create 2D profile extruded in Z, then rotate to position on body side
     translate([wing_x_pos, hw, 0])
-    rotate([0, 0, 0])
-    linear_extrude(height = wing_chord, center = false)
+    rotate([90, 0, 0])
+    linear_extrude(height = d * 0.15, center = false)
         polygon(wing_profile_2d);
 }
 
