@@ -116,25 +116,24 @@ module nose_cap() {
 
 // ─────────────────────────────────────────────────────────────
 //  WING (single blade fin)
-//  2D wing profile extruded to create a thin fin.
+//  2D wing profile extruded along X to create thin fin.
 // ─────────────────────────────────────────────────────────────
 module one_wing() {
     hw = body_hw(wing_x_pos);
     d = body_depth(wing_x_pos);
     
-    // 2D wing profile in local Y-Z plane:
-    // Y: lateral (0 at body edge, wing_span at tip)
-    // Z: vertical (0 at flat top, negative at belly)
+    // 2D wing profile in X-Z plane (chord x depth):
+    // This will be extruded along Y (lateral direction)
     wing_profile_2d = [
-        [0, 0],                    // root top
-        [wing_span, 0],            // tip top
-        [wing_span, -d * 0.15],    // tip belly
-        [0, -d * 0.2]              // root belly
+        [0, 0],                    // leading top
+        [wing_chord, 0],           // trailing top
+        [wing_chord * 0.7, -d * 0.2],  // trailing belly
+        [0, -d * 0.1]              // leading belly
     ];
     
+    // Position at body edge and extrude laterally (Y)
     translate([wing_x_pos, hw, 0])
-    rotate([0, 90, 0])
-    linear_extrude(height = wing_chord, center = false)
+    linear_extrude(height = wing_span, center = false)
         polygon(wing_profile_2d);
 }
 
