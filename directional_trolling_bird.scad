@@ -40,7 +40,7 @@ wing_tip_t   = 4;     // thickness at tip
 wing_fwd_angle = 8;   // degrees the leading face leans forward
 
 /* [Nose Tip] */
-nose_tip_radius = 1.5;  // radius of roundover on the nose tip edge
+nose_tip_radius = 0.5;  // radius of light roundover on the nose tip edge
 
 /* [Resolution] */
 $fn = 72;
@@ -73,7 +73,7 @@ function body_depth(x) =
     : wide_depth + (tail_depth - wide_depth)
         * smoothstep((x - wide_x) / (total_length - wide_x));
 
-// ─────────────────────────────────────────────────────────────
+// ──────────────────────���──────────────────────────────────────
 //  BODY MODULE
 //  Swept hull of flat-top / semi-ellipse cross-sections.
 //
@@ -122,8 +122,7 @@ module body_solid() {
 // ─────────────────────────────────────────────────────────────
 //  NOSE CAP
 //  A wedge/angular nose tip that tapers to a point.
-//  The tip edge is rounded over with a small radius for a soft edge.
-//  Uses Minkowski sum with a small sphere to create smooth roundover.
+//  Light roundover on tip edge using minimal Minkowski radius.
 // ─────────────────────────────────────────────────────────────
 module nose_cap() {
     hw = nose_width / 2;
@@ -175,7 +174,7 @@ module nose_cap() {
 //  WING THICKNESS along normalised half-span  s ∈ [0, 1]
 //    s = 0 → root (at body edge)
 //    s = 1 → tip
-// ─────────────────────────────────────────────────────────────
+// ──────���──────────────────────────────────────────────────────
 function wing_t(s) =
     (s <= 0.5)
     ? wing_root_t + (wing_mid_t - wing_root_t) * smoothstep(s / 0.5)
@@ -223,7 +222,7 @@ N_wing = 24;
 // Note: wing_bot_len must be ≥ dy for the geometry to be valid.
 // With the defaults: dy ≈ 49.5 mm, wing_bot_len = 60 mm → dx_te ≈ 33.9 mm.
 
-// ──────────────────────────────────────────────���──────────────
+// ──────────────────────────────────────────────────────────��──
 //  2D wing profile in local X-Z space:
 //    chord = wing chord length in X (trailing minus leading X)
 //    t     = leading-edge thickness (Z depth at leading edge)
@@ -293,7 +292,7 @@ module one_wing() {
     }
 }
 
-// ─────────────────────────────────────────────────────────────
+// ───────────────��─────────────────────────────────────────────
 //  ASSEMBLY
 // ─────────────────────────────────────────────────────────────
 union() {
