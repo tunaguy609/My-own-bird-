@@ -24,11 +24,12 @@ nose_depth  = 10;     // depth at nose tip
 wide_depth  = 40;     // depth at widest station
 tail_depth  = 10;     // depth at tail
 
-/* [Lateral Wings] */
+/* [Side Fin Wings] */
 wing_x_pos = 55;      // X position of wing attachment (along body)
-wing_height = 50;     // 50mm height from body top to wing tip
-wing_chord = 20;      // 20mm chord length (X direction sweep)
-wing_thickness = 2;   // thickness of wing blade
+fin_span = 35;        // 35mm from body edge outward (Y direction)
+fin_height = 30;      // 30mm tall (Z direction, from top to bottom)
+fin_chord = 15;       // 15mm front-to-back (X direction)
+fin_thickness = 2;    // 2mm thin blade
 
 /* [Resolution] */
 $fn = 72;
@@ -116,19 +117,20 @@ module nose_cap() {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  WING (vertical blade extending up from body side)
-//  Uses hull of two tall boxes: root at body, tip extends upward
+//  SIDE FIN (thin vertical blade extending outward from body)
+//  Creates elegant side fins like a real trolling lure.
 // ─────────────────────────────────────────────────────────────
-module one_wing() {
+module one_side_fin() {
     hw = body_hw(wing_x_pos);
     
-    // Root box: at body edge, extends along X (chord), stands up vertically
-    translate([wing_x_pos, hw - wing_thickness/2, 0])
-    cube([wing_chord, wing_thickness, 0.1], center=false);
+    // Thin fin blade using hull of two tall narrow boxes
+    // Root: at body edge, minimal outward extension
+    translate([wing_x_pos, hw, 0])
+    cube([fin_chord, fin_thickness, -fin_height], center=false);
     
-    // Tip box: extends upward (along +Z), tapers narrower in X
-    translate([wing_x_pos + wing_chord*0.2, hw - wing_thickness*0.35, -wing_height])
-    cube([wing_chord*0.6, wing_thickness*0.7, wing_height], center=false);
+    // Tip: extends outward by fin_span, tapers to point
+    translate([wing_x_pos + fin_chord*0.3, hw + fin_span*0.9, -fin_height*0.8])
+    cube([fin_chord*0.4, fin_thickness*0.5, fin_height*0.8], center=false);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -138,13 +140,13 @@ union() {
     body_solid();
     nose_cap();
     
-    // Right wing - hull of root and tip creates vertical blade
+    // Right side fin
     hull() {
-        one_wing();
+        one_side_fin();
     }
     
-    // Left wing (mirrored)
+    // Left side fin (mirrored)
     hull() {
-        mirror([0, 1, 0]) one_wing();
+        mirror([0, 1, 0]) one_side_fin();
     }
 }
