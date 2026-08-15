@@ -28,7 +28,7 @@ tail_depth  = 10;     // depth at tail
 wing_x_pos = 55;      // X position of wing attachment (along body)
 wing_span = 50;       // 50mm from body edge to wing tip
 wing_chord = 20;      // 20mm chord length (X direction sweep)
-wing_thickness = 3;   // thickness of wing blade
+wing_thickness = 2;   // thickness of wing blade
 
 /* [Resolution] */
 $fn = 72;
@@ -116,20 +116,19 @@ module nose_cap() {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  WING (horizontal blade using hull of two thin boxes)
-//  Creates wings that extend horizontally from body sides.
+//  WING (horizontal blade extending from body side)
+//  Wings extend perpendicular to body (along +Y), level with body top.
 // ─────────────────────────────────────────────────────────────
 module one_wing() {
     hw = body_hw(wing_x_pos);
     
-    // Hull of two thin rectangular slabs creates a tapered blade
-    // Root slab (at body edge)
+    // Root slab: at body edge, extends along X (chord)
     translate([wing_x_pos, hw, -wing_thickness/2])
-    cube([wing_chord, wing_thickness, wing_thickness], center=false);
+    cube([wing_chord, 0.1, wing_thickness], center=false);
     
-    // Tip slab (extends outward, tapers to narrower)
-    translate([wing_x_pos + wing_chord*0.3, hw + wing_span*0.8, -wing_thickness/2])
-    cube([wing_chord*0.4, wing_thickness, wing_thickness*0.5], center=false);
+    // Tip slab: extends outward (along +Y) by wing_span, smaller in X
+    translate([wing_x_pos + wing_chord*0.2, hw, -wing_thickness/2])
+    cube([wing_chord*0.6, wing_span, wing_thickness*0.7], center=false);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -138,9 +137,13 @@ module one_wing() {
 union() {
     body_solid();
     nose_cap();
+    
+    // Right wing
     hull() {
         one_wing();
     }
+    
+    // Left wing (mirrored)
     hull() {
         mirror([0, 1, 0]) one_wing();
     }
