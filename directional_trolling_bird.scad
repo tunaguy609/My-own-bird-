@@ -116,45 +116,26 @@ module nose_cap() {
 
 // ─────────────────────────────────────────────────────────────
 //  WING (single blade fin)
-//  Simple flat triangular fin that tapers from root to point.
+//  2D wing profile extruded to create a thin fin.
 // ─────────────────────────────────────────────────────────────
 module one_wing() {
     hw = body_hw(wing_x_pos);
     d = body_depth(wing_x_pos);
     
-    // Wing vertices:
-    // Root: attachment line at body edge
-    // Tip: 50mm outward, tapers to point
+    // 2D wing profile in local Y-Z plane:
+    // Y: lateral (0 at body edge, wing_span at tip)
+    // Z: vertical (0 at flat top, negative at belly)
+    wing_profile_2d = [
+        [0, 0],                    // root top
+        [wing_span, 0],            // tip top
+        [wing_span, -d * 0.15],    // tip belly
+        [0, -d * 0.2]              // root belly
+    ];
     
-    polyhedron(
-        points = [
-            // Root edge (at body, Y = hw)
-            [wing_x_pos, hw, 0],                    // 0: root top flat
-            [wing_x_pos + wing_chord, hw, 0],       // 1: root trailing top
-            [wing_x_pos + wing_chord, hw, -d*0.3],  // 2: root trailing belly
-            [wing_x_pos, hw, -d*0.2],                // 3: root leading belly
-            
-            // Tip point (50mm outward)
-            [wing_x_pos + wing_chord*0.5, hw + wing_span, -d*0.1]  // 4: tip point
-        ],
-        faces = [
-            // Top surface (flat)
-            [0, 1, 4],
-            
-            // Belly surface (angled)
-            [2, 3, 4],
-            
-            // Leading edge face
-            [0, 3, 4],
-            
-            // Trailing edge face
-            [1, 4, 2],
-            
-            // Root edge (closes the fin)
-            [0, 4, 3],
-            [1, 2, 4]
-        ]
-    );
+    translate([wing_x_pos, hw, 0])
+    rotate([0, 90, 0])
+    linear_extrude(height = wing_chord, center = false)
+        polygon(wing_profile_2d);
 }
 
 // ─────────────────────────────────────────────────────────────
