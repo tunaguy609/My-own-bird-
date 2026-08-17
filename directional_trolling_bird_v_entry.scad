@@ -73,9 +73,9 @@ function body_depth(x) =
         : wide_depth + (tail_depth - wide_depth)
             * smoothstep((x - wide_x) / (total_length - wide_x));
 
+// ────────────────────────────────────────────���────────────────
+//  BODY MODULE - ROUNDED BACK PROFILE
 // ─────────────────────────────────────────────────────────────
-//  BODY MODULE – ROUNDED BACK PROFILE
-// ────────────────────────────────────��────────────────────────
 N_body = 48;
 
 module body_profile_2d(hw, d, cr) {
@@ -90,7 +90,7 @@ module body_profile_2d(hw, d, cr) {
     ];
     
     // Back: upward rounded arch from right to left
-    // (1 - cos(a)) peaks at center (a=90°), zero at ends
+    // (1 - cos(a)) peaks at center (a=90), zero at ends
     back = [for (i = [N : -1 : 0])
         let(a = 180 * i / N)
         [hw * cos(a), cr * (1 - cos(a))]
