@@ -26,6 +26,11 @@ nose_width_power = 0.70;   // <1 widens faster near nose; try 0.65 to 0.85
 nose_entry_len   = 12;   // shorter V-entry zone for crisper wedge nose
 nose_entry_frac  = 0.38; // less early depth build to reduce nose bulge
 
+/* [Nose Chine Line Tuning] */
+chine_len = 40;          // length of straight-ish chine region from nose
+chine_drop = 0.80;       // fraction of local depth reached by chine at chine_len (0.7..0.9)
+chine_blend_power = 1.0; // 1 = linear side profile along chine (matches drawn white line)
+
 /* [Belly Shape Tuning] */
 belly_shape_power = 2.8; // >1 flattens side shoulders and reduces nose belly bulge
 
@@ -77,19 +82,31 @@ function crown_at_x(x) =
     ? crown_height * pow(x / wide_x, nose_peak_power)
     : crown_height * (1 - smoothstep((x - wide_x) / (total_length - wide_x)));
 
+// Nose chine target depth (for straight side-profile line near nose)
+function chine_target_depth(x, d_local) =
+    (x <= chine_len)
+    ? d_local * chine_drop * pow(clamp01(x / chine_len), chine_blend_power)
+    : d_local;
+
 // BODY MODULE - ROUNDED BACK PROFILE
-N_body = 64;
+N_body = 72;
 
-module body_profile_2d(hw, d, cr) {
-    // Belly: shape-controlled curve to reduce shoulder bulge (root-cause fix)
+module body_profile_2d(hw, d, cr, cx) {
+    // Belly: combine section shape control + nose chine linearization
     // Back: rounded arch curving upward with crown height cr
-    N = 40;
+    N = 44;
 
-    // Belly: from left to right (downward), power>1 flattens shoulders near the sides
+    d_ch = chine_target_depth(cx, d);
+
+    // Belly: from left to right (downward)
+    // For each lateral sample, blend between chine line depth and section depth profile.
     belly = [for (i = [0 : N])
         let(a = 180 * i / N,
-            s = max(0, sin(a)))
-        [hw * cos(a), -d * pow(s, belly_shape_power)]
+            s = max(0, sin(a)),
+            z_round = -d * pow(s, belly_shape_power),
+            z_chine = -d_ch * pow(s, 0.9),
+            w = smoothstep(s))
+        [hw * cos(a), (1 - w) * z_chine + w * z_round]
     ];
 
     // Back: upward rounded arch from right to left (same winding as belly)
@@ -107,7 +124,7 @@ module body_cross_section(cx, hw, d, cr) {
     translate([cx, 0, 0])
     rotate([90, 0, 90])
     linear_extrude(height = wafer, center = true)
-        body_profile_2d(hw, d, cr);
+        body_profile_2d(hw, d, cr, cx);
 }
 
 module body_solid() {
