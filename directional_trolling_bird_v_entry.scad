@@ -33,6 +33,7 @@ tail_depth  = 23.5;   // depth at tail
 
 /* [Crown/Back Roundness] */
 crown_height = 18;     // peak crown height
+nose_peak_power = 1.8; // >1 = flatter near nose, sharper near center (try 1.6..2.4)
 
 /* [Side Wings] */
 wing_x_pos = 55;      // X position of wing attachment (along body)
@@ -67,10 +68,10 @@ function body_depth(x) =
         : wide_depth + (tail_depth - wide_depth)
             * smoothstep((x - wide_x) / (total_length - wide_x));
 
-// Crown height profile: linear rise nose->wide_x, smooth taper wide_x->tail
+// Crown height profile: sharper rise nose->wide_x, smooth taper wide_x->tail
 function crown_at_x(x) =
     (x <= wide_x)
-    ? crown_height * (x / wide_x)
+    ? crown_height * pow(x / wide_x, nose_peak_power)
     : crown_height * (1 - smoothstep((x - wide_x) / (total_length - wide_x)));
 
 // BODY MODULE - ROUNDED BACK PROFILE
