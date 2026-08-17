@@ -78,27 +78,27 @@ function crown_curve(x) =
     crown_height * smoothstep(1 - abs(x - wide_x) / (total_length / 2));
 
 // ─────────────────────────────────────────────────────────────
-//  BODY MODULE – SIMPLE ROUNDED PROFILE
+//  BODY MODULE – SIMPLE WORKING GEOMETRY
 // ─────────────────────────────────────────────────────────────
 N_body = 48;
 
 module body_profile_2d(hw, d, cr) {
-    // Simple proven profile: belly semicircle + rounded top arc
-    N_arc = 25;
+    // Proper winding: belly and back curves with correct ordering
+    N = 20;
     
-    // Single continuous polygon going around the profile
-    polygon(concat(
-        // Belly: semicircle from left (-hw) to right (+hw)
-        [for (i = [0 : N_arc])
-            let(a = 180 * i / N_arc)
-            [hw * cos(a), -d * sin(a)]
-        ],
-        // Back: rounded top from right (+hw) back to left (-hw)
-        [for (i = [N_arc : -1 : 0])
-            let(a = 180 * i / N_arc)
-            [hw * cos(a), -cr * sin(a)]
-        ]
-    ));
+    // Belly curve: left (-hw) to right (+hw)
+    belly = [for (i = [0 : N])
+        let(t = i / N)
+        [hw * (1 - 2*t), -d * sqrt(1 - t*t)]
+    ];
+    
+    // Back curve: right (+hw) back to left (-hw)  
+    back = [for (i = [0 : N])
+        let(t = i / N)
+        [hw * (2*t - 1), -cr * sqrt(1 - t*t)]
+    ];
+    
+    polygon(concat(belly, back));
 }
 
 module body_cross_section(cx, hw, d, cr) {
