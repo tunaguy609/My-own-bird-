@@ -23,7 +23,7 @@ tail_width   = 15;    // body width at tail  (default = nose_width)
 nose_width_power = 0.70;   // <1 widens faster near nose; try 0.65 to 0.85
 
 /* [Nose Entry Tuning] */
-nose_entry_len   = -15;   // mm from tip for V-entry zone
+nose_entry_len   = 15;   // mm from tip for V-entry zone
 nose_entry_frac  = 0.48; // fraction of (wide_depth-nose_depth) reached at nose_entry_len
 
 /* [Belly Depth] */
