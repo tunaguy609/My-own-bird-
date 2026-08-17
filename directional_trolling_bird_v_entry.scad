@@ -29,10 +29,10 @@ nose_entry_frac  = 0.48; // fraction of (wide_depth-nose_depth) reached at nose_
 /* [Belly Depth] */
 nose_depth  = 15;     // depth at nose tip
 wide_depth  = 34;     // depth at widest station
-tail_depth  = 23.5;     // depth at tail
+tail_depth  = 23.5;   // depth at tail
 
 /* [Crown/Back Roundness] */
-crown_height = 6;     // height of rounded back
+crown_height = 5;     // height of rounded back at peak
 
 /* [Side Wings] */
 wing_x_pos = 55;      // X position of wing attachment (along body)
@@ -49,7 +49,7 @@ $fn = 48;
 function clamp01(t)    = max(0, min(1, t));
 function smoothstep(t) = let(c = clamp01(t)) c*c*(3 - 2*c);
 
-// ────────────────────────────��────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 //  Body profile functions
 // ─────────────────────────────────────────────────────────────
 
@@ -78,44 +78,27 @@ function crown_curve(x) =
     crown_height * smoothstep(1 - abs(x - wide_x) / (total_length / 2));
 
 // ─────────────────────────────────────────────────────────────
-//  BODY MODULE – SMOOTH ROUNDED PROFILE
+//  BODY MODULE – SIMPLE ROUNDED PROFILE
 // ─────────────────────────────────────────────────────────────
 N_body = 48;
 
 module body_profile_2d(hw, d, cr) {
-    // Rounded profile: belly half-ellipse + back half-ellipse
-    N_pts = 25;
-    pts = [
-        // Left side to bottom, using full belly depth
-        for (i = [0 : N_pts])
-            let(t = i / N_pts)
-            [
-                -hw + hw * t,
-                -d * sqrt(1 - t*t)
-            ],
-        // Bottom to right side, same belly curve
-        for (i = [N_pts : -1 : 0])
-            let(t = i / N_pts)
-            [
-                hw * t - hw,
-                -d * sqrt(1 - t*t)
-            ],
-        // Right side back up with rounded back
-        for (i = [0 : N_pts])
-            let(t = i / N_pts)
-            [
-                hw - hw * t,
-                -cr * sqrt(1 - t*t)
-            ],
-        // Left side back down with rounded back
-        for (i = [N_pts : -1 : 0])
-            let(t = i / N_pts)
-            [
-                -hw * t + hw,
-                -cr * sqrt(1 - t*t)
-            ]
-    ];
-    polygon(pts);
+    // Simple proven profile: belly semicircle + rounded top arc
+    N_arc = 25;
+    
+    // Single continuous polygon going around the profile
+    polygon(concat(
+        // Belly: semicircle from left (-hw) to right (+hw)
+        [for (i = [0 : N_arc])
+            let(a = 180 * i / N_arc)
+            [hw * cos(a), -d * sin(a)]
+        ],
+        // Back: rounded top from right (+hw) back to left (-hw)
+        [for (i = [N_arc : -1 : 0])
+            let(a = 180 * i / N_arc)
+            [hw * cos(a), -cr * sin(a)]
+        ]
+    ));
 }
 
 module body_cross_section(cx, hw, d, cr) {
