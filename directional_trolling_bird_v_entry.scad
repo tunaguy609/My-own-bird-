@@ -26,6 +26,9 @@ nose_width_power = 0.70;   // <1 widens faster near nose; try 0.65 to 0.85
 nose_entry_len   = 12;   // shorter V-entry zone for crisper wedge nose
 nose_entry_frac  = 0.38; // less early depth build to reduce nose bulge
 
+/* [Belly Shape Tuning] */
+belly_shape_power = 2.8; // >1 flattens side shoulders and reduces nose belly bulge
+
 /* [Belly Depth] */
 nose_depth  = 15;     // depth at nose tip
 wide_depth  = 34;     // depth at widest station
@@ -75,26 +78,27 @@ function crown_at_x(x) =
     : crown_height * (1 - smoothstep((x - wide_x) / (total_length - wide_x)));
 
 // BODY MODULE - ROUNDED BACK PROFILE
-N_body = 48;
+N_body = 64;
 
 module body_profile_2d(hw, d, cr) {
-    // Belly: semicircle dipping down with depth d
+    // Belly: shape-controlled curve to reduce shoulder bulge (root-cause fix)
     // Back: rounded arch curving upward with crown height cr
-    N = 25;
-    
-    // Belly: semicircle from left to right (downward)
+    N = 40;
+
+    // Belly: from left to right (downward), power>1 flattens shoulders near the sides
     belly = [for (i = [0 : N])
-        let(a = 180 * i / N)
-        [hw * cos(a), -d * sin(a)]
+        let(a = 180 * i / N,
+            s = max(0, sin(a)))
+        [hw * cos(a), -d * pow(s, belly_shape_power)]
     ];
-    
+
     // Back: upward rounded arch from right to left (same winding as belly)
     // symmetric arch: 0 at both ends, peak at center
     back = [for (i = [0 : N])
         let(a = 180 * i / N)
         [hw * cos(a), cr * sin(a)]
     ];
-    
+
     polygon(concat(belly, back));
 }
 
@@ -138,7 +142,6 @@ module left_wing() {
 // ASSEMBLY
 union() {
     body_solid();
-    //nose_cap();
     right_wing();
     left_wing();
 }
