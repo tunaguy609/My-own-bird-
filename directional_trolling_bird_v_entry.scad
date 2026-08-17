@@ -44,13 +44,18 @@ crown_height = 18;     // peak crown height
 nose_peak_power = 2.4; // >1 = flatter near nose, sharper near center (wedge-like top)
 
 /* [Side Wings] */
-wing_x_pos = 55;      // X position of wing attachment (along body)
-wing_span = 50;       // span of wing (Y direction - 50mm outward from body to tip)
-wing_height = 32;     // height of wing (Z direction - 32mm flat face)
-wing_thickness = 3;   // thickness of wing blade (X direction)
+wing_x_pos = 55;         // X position of wing attachment (along body)
+wing_span = 50;          // span of wing (Y direction - outward from body to tip)
+wing_height = 32;        // wing height (Z direction)
+wing_thickness = 4;      // thickness of wing blade (X direction)
+wing_sink = 6;           // how far wings sink into body for blending
+wing_forward_tilt = 8;   // degrees: top leans forward (+X)
+wing_tip_round = 5;      // radius for outside tip rounding
+wing_back_round = 1.5;   // slight rounding on trailing/back face
+wing_root_blend = 3.5;   // blend radius where wing meets body
 
 /* [Resolution] */
-$fn = 48;
+$fn = 64;
 
 // Utility functions
 function clamp01(t)    = max(0, min(1, t));
@@ -138,27 +143,74 @@ module body_solid() {
     }
 }
 
-// NOSE CAP REMOVED: continuous nose now comes from body hull only
-module nose_cap() {
-    // intentionally empty to avoid cap/body transition kink
+// Wing primitives: rounded outer tip + slight rounded trailing/back edge
+module wing_plate_rounded(span, h, th, tip_r, back_r) {
+    // Build as a rounded 2D profile in YZ and extrude in X (thickness)
+    linear_extrude(height = th, center = false)
+    offset(r = back_r)
+    offset(delta = -back_r)
+    polygon(points = concat(
+        // Root bottom -> root top
+        [[0, 0], [0, h]],
+        // Top edge to tip with rounded outer corner arc
+        [for (a = [90:-5:0])
+            [span - tip_r + tip_r*cos(a), h - tip_r + tip_r*sin(a)]],
+        // Tip down to bottom with rounded lower corner arc
+        [for (a = [0:-5:-90])
+            [span - tip_r + tip_r*cos(a), tip_r + tip_r*sin(a)]],
+        // Back to root bottom
+        [[0, 0]]
+    ));
 }
 
-// FLAT VERTICAL WINGS
 module right_wing() {
     hw = body_hw(wing_x_pos);
-    translate([wing_x_pos, hw, 0])
-    cube([wing_thickness, wing_span, wing_height]);
+    // sink into body and tilt slightly forward
+    translate([wing_x_pos - wing_thickness/2, hw - wing_root_blend, -wing_sink])
+    rotate([0, -wing_forward_tilt, 0])
+        wing_plate_rounded(wing_span, wing_height, wing_thickness, wing_tip_round, wing_back_round);
 }
 
 module left_wing() {
     hw = body_hw(wing_x_pos);
-    translate([wing_x_pos, -(hw + wing_span), 0])
-    cube([wing_thickness, wing_span, wing_height]);
+    // mirrored in Y
+    mirror([0,1,0])
+    translate([wing_x_pos - wing_thickness/2, hw - wing_root_blend, -wing_sink])
+    rotate([0, -wing_forward_tilt, 0])
+        wing_plate_rounded(wing_span, wing_height, wing_thickness, wing_tip_round, wing_back_round);
+}
+
+// Smooth blend union for body + wings
+module blended_assembly() {
+    mink_r = wing_root_blend;
+    minkowski() {
+        union() {
+            body_solid();
+            right_wing();
+            left_wing();
+        }
+        sphere(r = mink_r);
+    }
+}
+
+// Re-sharpen overall silhouette after blend to avoid overgrowth
+module final_assembly() {
+    mink_r = wing_root_blend;
+    difference() {
+        blended_assembly();
+        // trim oversize shell caused by minkowski by subtracting a shifted copy
+        // This keeps root blend while avoiding bulky inflation.
+        translate([0,0,0])
+        minkowski() {
+            union() {
+                body_solid();
+                right_wing();
+                left_wing();
+            }
+            sphere(r = max(0, mink_r - 1.5));
+        }
+    }
 }
 
 // ASSEMBLY
-union() {
-    body_solid();
-    right_wing();
-    left_wing();
-}
+final_assembly();
