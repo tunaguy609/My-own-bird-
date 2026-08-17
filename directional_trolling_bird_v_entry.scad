@@ -51,7 +51,7 @@ function smoothstep(t) = let(c = clamp01(t)) c*c*(3 - 2*c);
 
 // ─────────────────────────────────────────────────────────────
 //  Body profile functions
-// ──────────────────────��──────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 
 // Half-width at longitudinal station x
 function body_hw(x) =
@@ -73,27 +73,27 @@ function body_depth(x) =
         : wide_depth + (tail_depth - wide_depth)
             * smoothstep((x - wide_x) / (total_length - wide_x));
 
-// ─────────────────────────────────────────────────────────────
+// ────────────────────────────────────────��────────────────────
 //  BODY MODULE – ROUNDED BACK PROFILE
 // ─────────────────────────────────────────────────────────────
 N_body = 48;
 
 module body_profile_2d(hw, d, cr) {
-    // Symmetrical profile: 
-    // - Belly: full semicircle with depth d (varies along body)
-    // - Back: shallower semicircle with constant depth cr (rounded back)
+    // Belly: semicircle dipping down with depth d
+    // Back: inverted arc rising up with crown height cr
     N = 25;
     
-    // Belly: semicircle from left to right
+    // Belly: semicircle from left to right (downward)
     belly = [for (i = [0 : N])
         let(a = 180 * i / N)
         [hw * cos(a), -d * sin(a)]
     ];
     
-    // Back: constant rounded back, from right to left
+    // Back: inverted arc from right to left (upward rounded top)
+    // Using (1 - cos(a)) to create peak in middle, zero at ends
     back = [for (i = [N : -1 : 0])
         let(a = 180 * i / N)
-        [hw * cos(a), -cr * sin(a)]
+        [hw * cos(a), cr * (cos(a) - 1)]
     ];
     
     polygon(concat(belly, back));
