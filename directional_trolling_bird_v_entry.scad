@@ -23,8 +23,8 @@ tail_width   = 15;    // body width at tail  (default = nose_width)
 nose_width_power = 0.70;   // <1 widens faster near nose; try 0.65 to 0.85
 
 /* [Nose Entry Tuning] */
-nose_entry_len   = 15;   // mm from tip for V-entry zone
-nose_entry_frac  = 0.48; // fraction of (wide_depth-nose_depth) reached at nose_entry_len
+nose_entry_len   = 12;   // shorter V-entry zone for crisper wedge nose
+nose_entry_frac  = 0.38; // less early depth build to reduce nose bulge
 
 /* [Belly Depth] */
 nose_depth  = 15;     // depth at nose tip
@@ -33,7 +33,7 @@ tail_depth  = 23.5;   // depth at tail
 
 /* [Crown/Back Roundness] */
 crown_height = 18;     // peak crown height
-nose_peak_power = 1.8; // >1 = flatter near nose, sharper near center (try 1.6..2.4)
+nose_peak_power = 2.4; // >1 = flatter near nose, sharper near center (wedge-like top)
 
 /* [Side Wings] */
 wing_x_pos = 55;      // X position of wing attachment (along body)
