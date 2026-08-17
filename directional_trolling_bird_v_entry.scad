@@ -31,10 +31,8 @@ nose_depth  = 15;     // depth at nose tip
 wide_depth  = 34;     // depth at widest station
 tail_depth  = 23.5;     // depth at tail
 
-/* [Crown Ridge] */
-crown_height = 8;     // height of dorsal crown ridge (mm)
-crown_peak_x = 80;    // X position of crown peak height
-crown_width = 6;      // width of crown ridge base
+/* [Crown/Back Roundness] */
+crown_height = 6;     // height of rounded back at peak
 
 /* [Side Wings] */
 wing_x_pos = 55;      // X position of wing attachment (along body)
@@ -75,30 +73,42 @@ function body_depth(x) =
         : wide_depth + (tail_depth - wide_depth)
             * smoothstep((x - wide_x) / (total_length - wide_x));
 
-// Crown height at longitudinal station x
-function crown_at(x) =
-    crown_height * smoothstep(abs(x - crown_peak_x) / (total_length / 2));
+// Crown height varies along length – peaks mid-body, tapers at ends
+function crown_curve(x) =
+    crown_height * smoothstep(1 - abs(x - wide_x) / (total_length / 2));
 
 // ─────────────────────────────────────────────────────────────
-//  BODY MODULE
+//  BODY MODULE – ROUNDED TOP PROFILE
 // ─────────────────────────────────────────────────────────────
 N_body = 48;
 
-module body_profile_2d(hw, d) {
+module body_profile_2d(hw, d, cr) {
+    // Create cross-section with rounded top instead of flat
+    // hw = half-width, d = belly depth, cr = crown (back) height
     N_arc = 45;
     polygon([
+        // Bottom semicircle (belly) - normal
         for (i = [0 : N_arc])
             let(a = 180 * i / N_arc)
-            [hw * cos(a), -d * sin(a)]
+            [hw * cos(a), -d * sin(a)],
+        
+        // Top arc (rounded back) - curves inward from sides to peak
+        for (i = [N_arc : -1 : 0])
+            let(
+                a = 180 * i / N_arc,
+                // Create rounded top using cosine curve
+                top_y = -cr * (1 - cos(a)) / 2
+            )
+            [hw * cos(a), top_y]
     ]);
 }
 
-module body_cross_section(cx, hw, d) {
+module body_cross_section(cx, hw, d, cr) {
     wafer = 0.02;
     translate([cx, 0, 0])
     rotate([90, 0, 90])
     linear_extrude(height = wafer, center = true)
-        body_profile_2d(hw, d);
+        body_profile_2d(hw, d, cr);
 }
 
 module body_solid() {
@@ -106,49 +116,8 @@ module body_solid() {
         x0 = total_length *  i      / (N_body - 1);
         x1 = total_length * (i + 1) / (N_body - 1);
         hull() {
-            body_cross_section(x0, body_hw(x0), body_depth(x0));
-            body_cross_section(x1, body_hw(x1), body_depth(x1));
-        }
-    }
-}
-
-// ─────────────────────────────────────────────────────────────
-//  CROWN/DORSAL RIDGE – Triangular fin along centerline
-// ─────────────────────────────────────────────────────────────
-module crown_ridge() {
-    N_crown = 30;
-    for (i = [0 : N_crown - 2]) {
-        x0 = total_length * i / (N_crown - 1);
-        x1 = total_length * (i + 1) / (N_crown - 1);
-        
-        cr0 = crown_at(x0);
-        cr1 = crown_at(x1);
-        
-        // Build triangular ridge segments
-        hull() {
-            // Base left point
-            translate([x0, -crown_width/2, 0])
-            cube([0.1, 0.1, 0.1]);
-            
-            // Base right point
-            translate([x0, crown_width/2, 0])
-            cube([0.1, 0.1, 0.1]);
-            
-            // Apex point (rises upward in -Z direction)
-            translate([x0, 0, -cr0])
-            cube([0.1, 0.1, 0.1]);
-            
-            // Next segment base left
-            translate([x1, -crown_width/2, 0])
-            cube([0.1, 0.1, 0.1]);
-            
-            // Next segment base right
-            translate([x1, crown_width/2, 0])
-            cube([0.1, 0.1, 0.1]);
-            
-            // Next segment apex
-            translate([x1, 0, -cr1])
-            cube([0.1, 0.1, 0.1]);
+            body_cross_section(x0, body_hw(x0), body_depth(x0), crown_curve(x0));
+            body_cross_section(x1, body_hw(x1), body_depth(x1), crown_curve(x1));
         }
     }
 }
@@ -196,7 +165,6 @@ module left_wing() {
 // ─────────────────────────────────────────────────────────────
 union() {
     body_solid();
-    crown_ridge();
     nose_cap();
     right_wing();
     left_wing();
