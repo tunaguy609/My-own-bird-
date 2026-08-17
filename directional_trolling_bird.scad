@@ -19,6 +19,13 @@ wide_x       = 52;    // station of maximum width (measured from nose)
 max_width    = 60;    // maximum body width (at wide_x)
 tail_width   = 15;    // body width at tail  (default = nose_width)
 
+/* [Nose Width Entry Tuning] */
+nose_width_power = 0.70;   // <1 widens faster near nose; try 0.65–0.85
+
+/* [Nose Entry Tuning] */
+nose_entry_len   = 28;    // mm from tip for aggressive bite zone
+nose_entry_power = 0.45;  // <1 deepens quickly near tip (0.35–0.60 good)
+
 /* [Belly Depth  (flat-top surface to deepest belly point)] */
 nose_depth  = 10;     // depth at nose tip
 wide_depth  = 40;     // depth at widest station
@@ -46,18 +53,22 @@ function smoothstep(t) = let(c = clamp01(t)) c*c*(3 - 2*c);
 // Half-width at longitudinal station x
 function body_hw(x) =
     (x <= wide_x)
-    ? nose_width/2 + (max_width/2  - nose_width/2)
-        * (x / wide_x)  // LINEAR taper from nose to widest point
-    : max_width/2  + (tail_width/2 - max_width/2)
+    ? nose_width/2 + (max_width/2 - nose_width/2)
+        * pow(x / wide_x, nose_width_power)
+    : max_width/2 + (tail_width/2 - max_width/2)
         * smoothstep((x - wide_x) / (total_length - wide_x));
 
 // Belly depth at longitudinal station x
 function body_depth(x) =
-    (x <= wide_x)
-    ? nose_depth + (wide_depth - nose_depth)
-        * (x / wide_x)  // LINEAR taper from nose to widest point
-    : wide_depth + (tail_depth - wide_depth)
-        * smoothstep((x - wide_x) / (total_length - wide_x));
+    (x <= nose_entry_len)
+    ? nose_depth + (wide_depth - nose_depth) * 0.35
+        * pow(x / nose_entry_len, nose_entry_power)
+    : (x <= wide_x)
+        ? (nose_depth + (wide_depth - nose_depth) * 0.35)
+          + (wide_depth - (nose_depth + (wide_depth - nose_depth) * 0.35))
+            * smoothstep((x - nose_entry_len) / (wide_x - nose_entry_len))
+        : wide_depth + (tail_depth - wide_depth)
+            * smoothstep((x - wide_x) / (total_length - wide_x));
 
 // ─────────────────────────────────────────────────────────────
 //  BODY MODULE
