@@ -73,14 +73,14 @@ function body_depth(x) =
         : wide_depth + (tail_depth - wide_depth)
             * smoothstep((x - wide_x) / (total_length - wide_x));
 
-// ────────────────────────────────────────��────────────────────
-//  BODY MODULE – ROUNDED BACK PROFILE
 // ─────────────────────────────────────────────────────────────
+//  BODY MODULE – ROUNDED BACK PROFILE
+// ────────────────────────────────────��────────────────────────
 N_body = 48;
 
 module body_profile_2d(hw, d, cr) {
     // Belly: semicircle dipping down with depth d
-    // Back: inverted arc rising up with crown height cr
+    // Back: rounded arch curving upward with crown height cr
     N = 25;
     
     // Belly: semicircle from left to right (downward)
@@ -89,11 +89,11 @@ module body_profile_2d(hw, d, cr) {
         [hw * cos(a), -d * sin(a)]
     ];
     
-    // Back: inverted arc from right to left (upward rounded top)
-    // Using (1 - cos(a)) to create peak in middle, zero at ends
+    // Back: upward rounded arch from right to left
+    // (1 - cos(a)) peaks at center (a=90°), zero at ends
     back = [for (i = [N : -1 : 0])
         let(a = 180 * i / N)
-        [hw * cos(a), cr * (cos(a) - 1)]
+        [hw * cos(a), cr * (1 - cos(a))]
     ];
     
     polygon(concat(belly, back));
