@@ -32,7 +32,7 @@ wide_depth  = 34;     // depth at widest station
 tail_depth  = 23.5;   // depth at tail
 
 /* [Crown/Back Roundness] */
-crown_height = 5;     // height of rounded back at peak
+crown_height = 6;     // height of rounded back at peak
 
 /* [Side Wings] */
 wing_x_pos = 55;      // X position of wing attachment (along body)
@@ -49,7 +49,7 @@ $fn = 48;
 function clamp01(t)    = max(0, min(1, t));
 function smoothstep(t) = let(c = clamp01(t)) c*c*(3 - 2*c);
 
-// ──────────────────────────────��──────────────────────────────
+// ─────────────────────────────────────────────────────────────
 //  Body profile functions
 // ─────────────────────────────────────────────────────────────
 
@@ -73,18 +73,18 @@ function body_depth(x) =
         : wide_depth + (tail_depth - wide_depth)
             * smoothstep((x - wide_x) / (total_length - wide_x));
 
-// Crown height varies along length
+// Crown height varies along length – peaks mid-body, tapers at ends
 function crown_curve(x) =
     crown_height * smoothstep(1 - abs(x - wide_x) / (total_length / 2));
 
 // ─────────────────────────────────────────────────────────────
-//  BODY MODULE – SYMMETRICAL ROUNDED PROFILE
+//  BODY MODULE – SYMMETRICAL ROUNDED PROFILE WITH CROWN
 // ─────────────────────────────────────────────────────────────
 N_body = 48;
 
 module body_profile_2d(hw, d, cr) {
-    // Both belly and back use the same semicircle formula
-    // Only the height (d vs cr) changes
+    // Symmetrical profile: both belly and back use same semicircle formula
+    // Belly depth = d, Back (crown) depth = cr
     N = 25;
     
     // Belly: semicircle from left to right
@@ -93,7 +93,7 @@ module body_profile_2d(hw, d, cr) {
         [hw * cos(a), -d * sin(a)]
     ];
     
-    // Back: same semicircle but shallower, from right to left
+    // Back: same semicircle but shallower (cr < d), from right to left
     back = [for (i = [N : -1 : 0])
         let(a = 180 * i / N)
         [hw * cos(a), -cr * sin(a)]
@@ -115,6 +115,7 @@ module body_solid() {
         x0 = total_length *  i      / (N_body - 1);
         x1 = total_length * (i + 1) / (N_body - 1);
         hull() {
+            // Pass crown_curve to create rounded back that varies along body
             body_cross_section(x0, body_hw(x0), body_depth(x0), crown_curve(x0));
             body_cross_section(x1, body_hw(x1), body_depth(x1), crown_curve(x1));
         }
