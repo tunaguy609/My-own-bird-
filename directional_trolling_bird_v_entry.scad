@@ -13,23 +13,23 @@
 // ============================================================
 
 /* [Main Body] */
-total_length = 180;   // overall length nose to tail
+total_length = 210;   // overall length nose to tail
 nose_width   = 15;    // body width at nose tip
 wide_x       = 52;    // station of maximum width (measured from nose)
-max_width    = 60;    // maximum body width (at wide_x)
+max_width    = 50;    // maximum body width (at wide_x)
 tail_width   = 15;    // body width at tail  (default = nose_width)
 
 /* [Nose Width Entry Tuning] */
 nose_width_power = 0.70;   // <1 widens faster near nose; try 0.65–0.85
 
 /* [Nose Entry Tuning] */
-nose_entry_len   = 30;   // mm from tip for V-entry zone
-nose_entry_frac  = 0.38; // fraction of (wide_depth-nose_depth) reached at nose_entry_len
+nose_entry_len   = -15;   // mm from tip for V-entry zone
+nose_entry_frac  = 0.48; // fraction of (wide_depth-nose_depth) reached at nose_entry_len
 
 /* [Belly Depth  (flat-top surface to deepest belly point)] */
-nose_depth  = 10;     // depth at nose tip
-wide_depth  = 40;     // depth at widest station
-tail_depth  = 10;     // depth at tail
+nose_depth  = 15;     // depth at nose tip
+wide_depth  = 34;     // depth at widest station
+tail_depth  = 23.5;     // depth at tail
 
 /* [Side Wings] */
 wing_x_pos = 55;      // X position of wing attachment (along body)
@@ -105,7 +105,7 @@ module body_solid() {
 
 // ─────────────────────────────────────────────────────────────
 //  NOSE CAP
-// ─────────────────────────────────────────────────────────────
+// ─────────���───────────────────────────────────────────────────
 module nose_cap() {
     hw = nose_width / 2;
     d  = nose_depth;
