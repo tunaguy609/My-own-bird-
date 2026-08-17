@@ -49,7 +49,7 @@ $fn = 48;
 function clamp01(t)    = max(0, min(1, t));
 function smoothstep(t) = let(c = clamp01(t)) c*c*(3 - 2*c);
 
-// ─────────────────────────────────────────────────────────────
+// ──────────────────────────────��──────────────────────────────
 //  Body profile functions
 // ─────────────────────────────────────────────────────────────
 
@@ -78,24 +78,25 @@ function crown_curve(x) =
     crown_height * smoothstep(1 - abs(x - wide_x) / (total_length / 2));
 
 // ─────────────────────────────────────────────────────────────
-//  BODY MODULE – SIMPLE WORKING GEOMETRY
+//  BODY MODULE – SYMMETRICAL ROUNDED PROFILE
 // ─────────────────────────────────────────────────────────────
 N_body = 48;
 
 module body_profile_2d(hw, d, cr) {
-    // Proper winding: belly and back curves with correct ordering
-    N = 20;
+    // Both belly and back use the same semicircle formula
+    // Only the height (d vs cr) changes
+    N = 25;
     
-    // Belly curve: left (-hw) to right (+hw)
+    // Belly: semicircle from left to right
     belly = [for (i = [0 : N])
-        let(t = i / N)
-        [hw * (1 - 2*t), -d * sqrt(1 - t*t)]
+        let(a = 180 * i / N)
+        [hw * cos(a), -d * sin(a)]
     ];
     
-    // Back curve: right (+hw) back to left (-hw)  
-    back = [for (i = [0 : N])
-        let(t = i / N)
-        [hw * (2*t - 1), -cr * sqrt(1 - t*t)]
+    // Back: same semicircle but shallower, from right to left
+    back = [for (i = [N : -1 : 0])
+        let(a = 180 * i / N)
+        [hw * cos(a), -cr * sin(a)]
     ];
     
     polygon(concat(belly, back));
