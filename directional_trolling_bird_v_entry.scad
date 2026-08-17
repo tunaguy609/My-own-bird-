@@ -84,28 +84,15 @@ module body_profile_2d(hw, d) {
     // profile_roundness controls how bulbous the sides are
     // belly_exponent controls how deep/rounded the belly is
     
-    N_points = 180;  // high resolution for smooth curves
+    N_pts = 60;  // reduced resolution for faster rendering
     polygon([
-        for (i = [0 : N_points])
+        for (i = [0 : N_pts])
             let(
-                // Angle from 0° (top center) to 180° (bottom center)
-                angle = 180 * i / N_points,
-                angle_rad = angle * 3.14159 / 180,
-                
-                // Normalized position along the curve (0 at top, 1 at bottom)
-                t = angle / 180,
-                
-                // Side width (using power function for rounded ellipse effect)
-                side_scale = pow(sin(angle), profile_roundness),
-                
-                // Belly depth (deeper curve with belly_exponent)
-                belly_scale = pow(sin(angle), belly_exponent),
-                
-                // Cartesian coordinates
-                x_pos = hw * side_scale * cos(angle),
-                z_pos = -d * belly_scale
+                a = 180 * i / N_pts,
+                s = pow(sin(a), profile_roundness),
+                b = pow(sin(a), belly_exponent)
             )
-            [x_pos, z_pos]
+            [hw * s * cos(a), -d * b]
     ]);
 }
 
