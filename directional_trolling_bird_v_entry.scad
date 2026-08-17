@@ -82,10 +82,10 @@ module body_profile_2d(hw, d, cr) {
     ];
     
     // Back: upward rounded arch from right to left (same winding as belly)
-    // (1 - cos(a)) peaks at center (a=90), zero at ends
+    // symmetric arch: 0 at both ends, peak at center
     back = [for (i = [0 : N])
         let(a = 180 * i / N)
-        [hw * cos(a), cr * (1 - cos(a))]
+        [hw * cos(a), cr * sin(a)]
     ];
     
     polygon(concat(belly, back));
