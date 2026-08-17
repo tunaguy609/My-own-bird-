@@ -26,13 +26,13 @@ nose_width_power = 0.70;   // <1 widens faster near nose; try 0.65–0.85
 nose_entry_len   = -15;   // mm from tip for V-entry zone
 nose_entry_frac  = 0.48; // fraction of (wide_depth-nose_depth) reached at nose_entry_len
 
-/* [Belly Depth  (flat-top surface to deepest belly point)] */
+/* [Belly Depth] */
 nose_depth  = 15;     // depth at nose tip
 wide_depth  = 34;     // depth at widest station
 tail_depth  = 23.5;     // depth at tail
 
 /* [Crown/Back Roundness] */
-crown_height = 6;     // height of rounded back at peak
+crown_height = 6;     // height of rounded back
 
 /* [Side Wings] */
 wing_x_pos = 55;      // X position of wing attachment (along body)
@@ -49,7 +49,7 @@ $fn = 48;
 function clamp01(t)    = max(0, min(1, t));
 function smoothstep(t) = let(c = clamp01(t)) c*c*(3 - 2*c);
 
-// ─────────────────────────────────────────────────────────────
+// ────────────────────────────��────────────────────────────────
 //  Body profile functions
 // ─────────────────────────────────────────────────────────────
 
@@ -73,39 +73,27 @@ function body_depth(x) =
         : wide_depth + (tail_depth - wide_depth)
             * smoothstep((x - wide_x) / (total_length - wide_x));
 
-// Crown height varies along length – peaks mid-body, tapers at ends
+// Crown height varies along length
 function crown_curve(x) =
     crown_height * smoothstep(1 - abs(x - wide_x) / (total_length / 2));
 
 // ─────────────────────────────────────────────────────────────
-//  BODY MODULE – ROUNDED TOP PROFILE
+//  BODY MODULE – SIMPLE ROUNDED PROFILE
 // ─────────────────────────────────────────────────────────────
 N_body = 48;
 
 module body_profile_2d(hw, d, cr) {
-    // Create closed polygon with rounded back
-    // Goes around: belly from left to right, then back along rounded top
-    N_arc = 40;
-    
-    // Build single continuous polygon: belly arc + top arc
-    points = concat(
-        // Bottom half: from left side to right side (belly curve)
-        [for (i = [0 : N_arc])
-            let(a = 180 * i / N_arc)
-            [hw * cos(a), -d * sin(a)]
-        ],
-        // Top half: from right side back to left side (rounded back)
-        [for (i = [N_arc : -1 : 0])
-            let(
-                a = 180 * i / N_arc,
-                // Rounded top curve: parabolic shape
-                top_depth = cr * (1 - cos(a)) / 2
-            )
-            [hw * cos(a), -top_depth]
-        ]
-    );
-    
-    polygon(points);
+    // Simple rounded cross-section with flat belly and curved top
+    N_arc = 30;
+    polygon([
+        // Belly (flat bottom with slight curve)
+        [-hw, -d],
+        [hw, -d],
+        // Rounded back (return path)
+        for (i = [N_arc : -1 : 0])
+            let(a = 90 * i / N_arc)
+            [hw * cos(a), -cr * sin(a)]
+    ]);
 }
 
 module body_cross_section(cx, hw, d, cr) {
