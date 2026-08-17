@@ -117,25 +117,9 @@ module body_solid() {
     }
 }
 
-// NOSE CAP (adjusted to reduce belly bulge at nose transition)
+// NOSE CAP REMOVED: continuous nose now comes from body hull only
 module nose_cap() {
-    hw = nose_width / 2;
-    d  = nose_depth;
-    
-    polyhedron(
-        points = [
-            [0, hw, 0],
-            [0, -hw, 0],
-            [0, 0, -d],
-            [-0.55*d, 0, -0.72*d]
-        ],
-        faces = [
-            [0, 2, 1],
-            [0, 3, 2],
-            [1, 2, 3],
-            [1, 0, 3]
-        ]
-    );
+    // intentionally empty to avoid cap/body transition kink
 }
 
 // FLAT VERTICAL WINGS
@@ -154,7 +138,7 @@ module left_wing() {
 // ASSEMBLY
 union() {
     body_solid();
-    nose_cap();
+    //nose_cap();
     right_wing();
     left_wing();
 }
