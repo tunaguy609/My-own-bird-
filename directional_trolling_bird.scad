@@ -61,11 +61,11 @@ function body_hw(x) =
 // Belly depth at longitudinal station x
 function body_depth(x) =
     (x <= nose_entry_len)
-    ? nose_depth + (wide_depth - nose_depth) * 0.35
-        * pow(x / nose_entry_len, nose_entry_power)
+    ? nose_depth + (wide_depth - nose_depth) * 0.45
+        * pow(x / nose_entry_len, 0.85)   // more linear, less rounded nose entry
     : (x <= wide_x)
-        ? (nose_depth + (wide_depth - nose_depth) * 0.35)
-          + (wide_depth - (nose_depth + (wide_depth - nose_depth) * 0.35))
+        ? (nose_depth + (wide_depth - nose_depth) * 0.45)
+          + (wide_depth - (nose_depth + (wide_depth - nose_depth) * 0.45))
             * smoothstep((x - nose_entry_len) / (wide_x - nose_entry_len))
         : wide_depth + (tail_depth - wide_depth)
             * smoothstep((x - wide_x) / (total_length - wide_x));
