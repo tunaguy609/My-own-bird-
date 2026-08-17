@@ -81,9 +81,9 @@ module body_profile_2d(hw, d, cr) {
         [hw * cos(a), -d * sin(a)]
     ];
     
-    // Back: upward rounded arch from right to left
+    // Back: upward rounded arch from right to left (same winding as belly)
     // (1 - cos(a)) peaks at center (a=90), zero at ends
-    back = [for (i = [N : -1 : 0])
+    back = [for (i = [0 : N])
         let(a = 180 * i / N)
         [hw * cos(a), cr * (1 - cos(a))]
     ];
