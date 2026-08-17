@@ -20,7 +20,7 @@ max_width    = 50;    // maximum body width (at wide_x)
 tail_width   = 15;    // body width at tail  (default = nose_width)
 
 /* [Nose Width Entry Tuning] */
-nose_width_power = 0.70;   // <1 widens faster near nose; try 0.65–0.85
+nose_width_power = 0.70;   // <1 widens faster near nose; try 0.65 to 0.85
 
 /* [Nose Entry Tuning] */
 nose_entry_len   = -15;   // mm from tip for V-entry zone
