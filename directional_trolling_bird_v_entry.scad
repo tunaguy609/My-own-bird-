@@ -32,7 +32,7 @@ wide_depth  = 34;     // depth at widest station
 tail_depth  = 23.5;   // depth at tail
 
 /* [Crown/Back Roundness] */
-crown_height = 18;     // height of rounded back (CONSTANT along body)
+crown_height = 18;     // peak crown height
 
 /* [Side Wings] */
 wing_x_pos = 55;      // X position of wing attachment (along body)
@@ -66,6 +66,12 @@ function body_depth(x) =
             * smoothstep((x - nose_entry_len) / (wide_x - nose_entry_len))
         : wide_depth + (tail_depth - wide_depth)
             * smoothstep((x - wide_x) / (total_length - wide_x));
+
+// Crown height profile: peak at wide_x, taper toward tail (and nose)
+function crown_at_x(x) =
+    (x <= wide_x)
+    ? crown_height * smoothstep(x / wide_x)
+    : crown_height * (1 - smoothstep((x - wide_x) / (total_length - wide_x)));
 
 // BODY MODULE - ROUNDED BACK PROFILE
 N_body = 48;
@@ -104,9 +110,8 @@ module body_solid() {
         x0 = total_length *  i      / (N_body - 1);
         x1 = total_length * (i + 1) / (N_body - 1);
         hull() {
-            // Use CONSTANT crown_height for rounded back at all stations
-            body_cross_section(x0, body_hw(x0), body_depth(x0), crown_height);
-            body_cross_section(x1, body_hw(x1), body_depth(x1), crown_height);
+            body_cross_section(x0, body_hw(x0), body_depth(x0), crown_at_x(x0));
+            body_cross_section(x1, body_hw(x1), body_depth(x1), crown_at_x(x1));
         }
     }
 }
