@@ -31,6 +31,10 @@ nose_depth  = 15;     // depth at nose tip
 wide_depth  = 34;     // depth at widest station
 tail_depth  = 23.5;     // depth at tail
 
+/* [Body Profile Roundness] */
+profile_roundness = 1.8;   // controls bulbousness of sides; 1.0=semi-circle, 1.5+=more rounded/fish-like
+belly_exponent = 2.2;      // controls belly curve depth; higher = rounder belly
+
 /* [Side Wings] */
 wing_x_pos = 55;      // X position of wing attachment (along body)
 wing_span = 50;       // span of wing (Y direction - 50mm outward from body to tip)
@@ -71,16 +75,37 @@ function body_depth(x) =
             * smoothstep((x - wide_x) / (total_length - wide_x));
 
 // ─────────────────────────────────────────────────────────────
-//  BODY MODULE
+//  BODY MODULE – ROUNDED ELLIPTICAL PROFILE
 // ─────────────────────────────────────────────────────────────
 N_body = 64;
 
 module body_profile_2d(hw, d) {
-    N_arc = 36;
+    // Create a smooth elliptical/rounded body profile
+    // profile_roundness controls how bulbous the sides are
+    // belly_exponent controls how deep/rounded the belly is
+    
+    N_points = 180;  // high resolution for smooth curves
     polygon([
-        for (i = [0 : N_arc])
-            let(a = 180 * i / N_arc)
-            [hw * cos(a),  -d * sin(a)]
+        for (i = [0 : N_points])
+            let(
+                // Angle from 0° (top center) to 180° (bottom center)
+                angle = 180 * i / N_points,
+                angle_rad = angle * 3.14159 / 180,
+                
+                // Normalized position along the curve (0 at top, 1 at bottom)
+                t = angle / 180,
+                
+                // Side width (using power function for rounded ellipse effect)
+                side_scale = pow(sin(angle), profile_roundness),
+                
+                // Belly depth (deeper curve with belly_exponent)
+                belly_scale = pow(sin(angle), belly_exponent),
+                
+                // Cartesian coordinates
+                x_pos = hw * side_scale * cos(angle),
+                z_pos = -d * belly_scale
+            )
+            [x_pos, z_pos]
     ]);
 }
 
@@ -105,7 +130,7 @@ module body_solid() {
 
 // ─────────────────────────────────────────────────────────────
 //  NOSE CAP
-// ─────────���───────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 module nose_cap() {
     hw = nose_width / 2;
     d  = nose_depth;
