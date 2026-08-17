@@ -32,7 +32,7 @@ wide_depth  = 34;     // depth at widest station
 tail_depth  = 23.5;   // depth at tail
 
 /* [Crown/Back Roundness] */
-crown_height = 6;     // height of rounded back (CONSTANT along body)
+crown_height = 18;     // height of rounded back (CONSTANT along body)
 
 /* [Side Wings] */
 wing_x_pos = 55;      // X position of wing attachment (along body)
