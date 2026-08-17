@@ -117,7 +117,7 @@ module body_solid() {
     }
 }
 
-// NOSE CAP
+// NOSE CAP (adjusted to reduce belly bulge at nose transition)
 module nose_cap() {
     hw = nose_width / 2;
     d  = nose_depth;
@@ -127,7 +127,7 @@ module nose_cap() {
             [0, hw, 0],
             [0, -hw, 0],
             [0, 0, -d],
-            [-d, 0, -d/2]
+            [-0.55*d, 0, -0.72*d]
         ],
         faces = [
             [0, 2, 1],
