@@ -67,10 +67,10 @@ function body_depth(x) =
         : wide_depth + (tail_depth - wide_depth)
             * smoothstep((x - wide_x) / (total_length - wide_x));
 
-// Crown height profile: peak at wide_x, taper toward tail (and nose)
+// Crown height profile: linear rise nose->wide_x, smooth taper wide_x->tail
 function crown_at_x(x) =
     (x <= wide_x)
-    ? crown_height * smoothstep(x / wide_x)
+    ? crown_height * (x / wide_x)
     : crown_height * (1 - smoothstep((x - wide_x) / (total_length - wide_x)));
 
 // BODY MODULE - ROUNDED BACK PROFILE
