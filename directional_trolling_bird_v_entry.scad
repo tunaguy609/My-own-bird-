@@ -83,24 +83,29 @@ function crown_curve(x) =
 N_body = 48;
 
 module body_profile_2d(hw, d, cr) {
-    // Create cross-section with rounded top instead of flat
-    // hw = half-width, d = belly depth, cr = crown (back) height
-    N_arc = 45;
-    polygon([
-        // Bottom semicircle (belly) - normal
-        for (i = [0 : N_arc])
+    // Create closed polygon with rounded back
+    // Goes around: belly from left to right, then back along rounded top
+    N_arc = 40;
+    
+    // Build single continuous polygon: belly arc + top arc
+    points = concat(
+        // Bottom half: from left side to right side (belly curve)
+        [for (i = [0 : N_arc])
             let(a = 180 * i / N_arc)
-            [hw * cos(a), -d * sin(a)],
-        
-        // Top arc (rounded back) - curves inward from sides to peak
-        for (i = [N_arc : -1 : 0])
+            [hw * cos(a), -d * sin(a)]
+        ],
+        // Top half: from right side back to left side (rounded back)
+        [for (i = [N_arc : -1 : 0])
             let(
                 a = 180 * i / N_arc,
-                // Create rounded top using cosine curve
-                top_y = -cr * (1 - cos(a)) / 2
+                // Rounded top curve: parabolic shape
+                top_depth = cr * (1 - cos(a)) / 2
             )
-            [hw * cos(a), top_y]
-    ]);
+            [hw * cos(a), -top_depth]
+        ]
+    );
+    
+    polygon(points);
 }
 
 module body_cross_section(cx, hw, d, cr) {
