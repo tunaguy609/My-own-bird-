@@ -31,9 +31,8 @@ nose_depth  = 15;     // depth at nose tip
 wide_depth  = 34;     // depth at widest station
 tail_depth  = 23.5;     // depth at tail
 
-/* [Body Profile Roundness] */
-profile_roundness = 1.8;   // controls bulbousness of sides; 1.0=semi-circle, 1.5+=more rounded/fish-like
-belly_exponent = 2.2;      // controls belly curve depth; higher = rounder belly
+/* [Body Profile Shape] */
+profile_style = 0;     // 0=rounded ellipse, 1=wide flat belly
 
 /* [Side Wings] */
 wing_x_pos = 55;      // X position of wing attachment (along body)
@@ -42,7 +41,7 @@ wing_height = 32;     // height of wing (Z direction - 32mm flat face)
 wing_thickness = 3;   // thickness of wing blade (X direction)
 
 /* [Resolution] */
-$fn = 72;
+$fn = 48;
 
 // ─────────────────────────────────────────────────────────────
 //  Utility functions
@@ -66,7 +65,7 @@ function body_hw(x) =
 function body_depth(x) =
     (x <= nose_entry_len)
     ? nose_depth + (wide_depth - nose_depth) * nose_entry_frac
-        * (x / nose_entry_len)   // straight V-like entry (linear)
+        * (x / nose_entry_len)
     : (x <= wide_x)
         ? (nose_depth + (wide_depth - nose_depth) * nose_entry_frac)
           + (wide_depth - (nose_depth + (wide_depth - nose_depth) * nose_entry_frac))
@@ -75,24 +74,17 @@ function body_depth(x) =
             * smoothstep((x - wide_x) / (total_length - wide_x));
 
 // ─────────────────────────────────────────────────────────────
-//  BODY MODULE – ROUNDED ELLIPTICAL PROFILE
+//  BODY MODULE
 // ─────────────────────────────────────────────────────────────
-N_body = 64;
+N_body = 48;
 
 module body_profile_2d(hw, d) {
-    // Create a smooth elliptical/rounded body profile
-    // profile_roundness controls how bulbous the sides are
-    // belly_exponent controls how deep/rounded the belly is
-    
-    N_pts = 60;  // reduced resolution for faster rendering
+    // Simple rounded elliptical profile
+    N_arc = 45;
     polygon([
-        for (i = [0 : N_pts])
-            let(
-                a = 180 * i / N_pts,
-                s = pow(sin(a), profile_roundness),
-                b = pow(sin(a), belly_exponent)
-            )
-            [hw * s * cos(a), -d * b]
+        for (i = [0 : N_arc])
+            let(a = 180 * i / N_arc)
+            [hw * cos(a), -d * sin(a)]
     ]);
 }
 
@@ -140,23 +132,15 @@ module nose_cap() {
 
 // ─────────────────────────────────────────────────────────────
 //  FLAT VERTICAL WINGS
-//  Simple rectangular flat blades perpendicular to body
-//  50mm span outward, 32mm flat face height
 // ─────────────────────────────────────────────────────────────
 module right_wing() {
     hw = body_hw(wing_x_pos);
-    
-    // Right wing: flat rectangular blade
-    // Attached at body edge, extends outward 50mm
-    // Flat face is 32mm tall
     translate([wing_x_pos, hw, 0])
     cube([wing_thickness, wing_span, wing_height]);
 }
 
 module left_wing() {
     hw = body_hw(wing_x_pos);
-    
-    // Left wing: mirror placement
     translate([wing_x_pos, -(hw + wing_span), 0])
     cube([wing_thickness, wing_span, wing_height]);
 }
