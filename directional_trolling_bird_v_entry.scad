@@ -34,6 +34,7 @@ tail_depth  = 23.5;     // depth at tail
 /* [Crown Ridge] */
 crown_height = 8;     // height of dorsal crown ridge (mm)
 crown_peak_x = 80;    // X position of crown peak height
+crown_width = 6;      // width of crown ridge base
 
 /* [Side Wings] */
 wing_x_pos = 55;      // X position of wing attachment (along body)
@@ -112,26 +113,42 @@ module body_solid() {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  CROWN/DORSAL RIDGE
+//  CROWN/DORSAL RIDGE – Triangular fin along centerline
 // ─────────────────────────────────────────────────────────────
 module crown_ridge() {
-    N_crown = 40;
+    N_crown = 30;
     for (i = [0 : N_crown - 2]) {
         x0 = total_length * i / (N_crown - 1);
         x1 = total_length * (i + 1) / (N_crown - 1);
         
-        hw0 = body_hw(x0);
-        hw1 = body_hw(x1);
         cr0 = crown_at(x0);
         cr1 = crown_at(x1);
         
-        // Crown ridge runs along centerline (+Y direction) at top
+        // Build triangular ridge segments
         hull() {
-            translate([x0, 0, -cr0])
-            cylinder(r = 1.5, h = 0.01, center = true);
+            // Base left point
+            translate([x0, -crown_width/2, 0])
+            cube([0.1, 0.1, 0.1]);
             
+            // Base right point
+            translate([x0, crown_width/2, 0])
+            cube([0.1, 0.1, 0.1]);
+            
+            // Apex point (rises upward in -Z direction)
+            translate([x0, 0, -cr0])
+            cube([0.1, 0.1, 0.1]);
+            
+            // Next segment base left
+            translate([x1, -crown_width/2, 0])
+            cube([0.1, 0.1, 0.1]);
+            
+            // Next segment base right
+            translate([x1, crown_width/2, 0])
+            cube([0.1, 0.1, 0.1]);
+            
+            // Next segment apex
             translate([x1, 0, -cr1])
-            cylinder(r = 1.5, h = 0.01, center = true);
+            cube([0.1, 0.1, 0.1]);
         }
     }
 }
