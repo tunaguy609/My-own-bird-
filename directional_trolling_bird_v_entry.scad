@@ -1,6 +1,6 @@
 // ============================================================
-//  Directional Trolling Bird – Sterling Wide Tracker Style
-//  Parametric OpenSCAD model – v1.0
+//  Directional Trolling Bird - Sterling Wide Tracker Style
+//  Parametric OpenSCAD model - v1.0
 // ============================================================
 //
 //  COORDINATE SYSTEM
@@ -43,15 +43,9 @@ wing_thickness = 3;   // thickness of wing blade (X direction)
 /* [Resolution] */
 $fn = 48;
 
-// ─────────────────────────────────────────────────────────────
-//  Utility functions
-// ─────────────────────────────────────────────────────────────
+// Utility functions
 function clamp01(t)    = max(0, min(1, t));
 function smoothstep(t) = let(c = clamp01(t)) c*c*(3 - 2*c);
-
-// ─────────────────────────────────────────────────────────────
-//  Body profile functions
-// ─────────────────────────────────────────────────────────────
 
 // Half-width at longitudinal station x
 function body_hw(x) =
@@ -73,9 +67,7 @@ function body_depth(x) =
         : wide_depth + (tail_depth - wide_depth)
             * smoothstep((x - wide_x) / (total_length - wide_x));
 
-// ────────────────────────────────────────────���────────────────
-//  BODY MODULE - ROUNDED BACK PROFILE
-// ─────────────────────────────────────────────────────────────
+// BODY MODULE - ROUNDED BACK PROFILE
 N_body = 48;
 
 module body_profile_2d(hw, d, cr) {
@@ -119,9 +111,7 @@ module body_solid() {
     }
 }
 
-// ─────────────────────────────────────────────────────────────
-//  NOSE CAP
-// ─────────────────────────────────────────────────────────────
+// NOSE CAP
 module nose_cap() {
     hw = nose_width / 2;
     d  = nose_depth;
@@ -142,9 +132,7 @@ module nose_cap() {
     );
 }
 
-// ─────────────────────────────────────────────────────────────
-//  FLAT VERTICAL WINGS
-// ─────────────────────────────────────────────────────────────
+// FLAT VERTICAL WINGS
 module right_wing() {
     hw = body_hw(wing_x_pos);
     translate([wing_x_pos, hw, 0])
@@ -157,9 +145,7 @@ module left_wing() {
     cube([wing_thickness, wing_span, wing_height]);
 }
 
-// ─────────────────────────────────────────────────────────────
-//  ASSEMBLY
-// ─────────────────────────────────────────────────────────────
+// ASSEMBLY
 union() {
     body_solid();
     nose_cap();
