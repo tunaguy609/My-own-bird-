@@ -78,26 +78,48 @@ function crown_curve(x) =
     crown_height * smoothstep(1 - abs(x - wide_x) / (total_length / 2));
 
 // ─────────────────────────────────────────────────────────────
-//  BODY MODULE – SIMPLE ROUNDED PROFILE
+//  BODY MODULE – SMOOTH ROUNDED PROFILE
 // ─────────────────────────────────────────────────────────────
 N_body = 48;
 
 module body_profile_2d(hw, d, cr) {
-    // Simple rounded cross-section with flat belly and curved top
-    N_arc = 30;
-    polygon([
-        // Belly (flat bottom with slight curve)
-        [-hw, -d],
-        [hw, -d],
-        // Rounded back (return path)
-        for (i = [N_arc : -1 : 0])
-            let(a = 90 * i / N_arc)
-            [hw * cos(a), -cr * sin(a)]
-    ]);
+    // Rounded profile: belly half-ellipse + back half-ellipse
+    N_pts = 25;
+    pts = [
+        // Left side to bottom, using full belly depth
+        for (i = [0 : N_pts])
+            let(t = i / N_pts)
+            [
+                -hw + hw * t,
+                -d * sqrt(1 - t*t)
+            ],
+        // Bottom to right side, same belly curve
+        for (i = [N_pts : -1 : 0])
+            let(t = i / N_pts)
+            [
+                hw * t - hw,
+                -d * sqrt(1 - t*t)
+            ],
+        // Right side back up with rounded back
+        for (i = [0 : N_pts])
+            let(t = i / N_pts)
+            [
+                hw - hw * t,
+                -cr * sqrt(1 - t*t)
+            ],
+        // Left side back down with rounded back
+        for (i = [N_pts : -1 : 0])
+            let(t = i / N_pts)
+            [
+                -hw * t + hw,
+                -cr * sqrt(1 - t*t)
+            ]
+    ];
+    polygon(pts);
 }
 
 module body_cross_section(cx, hw, d, cr) {
-    wafer = 0.02;
+    wafer = 0.01;
     translate([cx, 0, 0])
     rotate([90, 0, 90])
     linear_extrude(height = wafer, center = true)
