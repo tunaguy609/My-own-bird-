@@ -20,28 +20,28 @@ max_width    = 50;    // maximum body width (at wide_x)
 tail_width   = 15;    // body width at tail  (default = nose_width)
 
 /* [Nose Width Entry Tuning] */
-nose_width_power = 0.70;   // <1 widens faster near nose; try 0.65 to 0.85
+nose_width_power = 1.15;   // >1 narrows faster near nose for a sharper taper
 
 /* [Nose Entry Tuning] */
-nose_entry_len   = 12;   // shorter V-entry zone for crisper wedge nose
-nose_entry_frac  = 0.38; // less early depth build to reduce nose bulge
+nose_entry_len   = 26;   // longer V-entry zone for straighter wedge nose
+nose_entry_frac  = 0.18; // less early depth build to reduce nose bulge
 
 /* [Nose Chine Line Tuning] */
-chine_len = 40;          // length of straight-ish chine region from nose
-chine_drop = 0.80;       // fraction of local depth reached by chine at chine_len (0.7..0.9)
-chine_blend_power = 1.0; // 1 = linear side profile along chine (matches drawn white line)
+chine_len = 55;          // length of straight-ish chine region from nose
+chine_drop = 0.72;       // fraction of local depth reached by chine at chine_len
+chine_blend_power = 0.9; // near-linear side profile along chine
 
 /* [Belly Shape Tuning] */
-belly_shape_power = 2.8; // >1 flattens side shoulders and reduces nose belly bulge
+belly_shape_power = 1.9; // lower value reduces shoulder bulge and straightens taper
 
 /* [Belly Depth] */
-nose_depth  = 15;     // depth at nose tip
+nose_depth  = 12.5;   // depth at nose tip (reduced for cleaner taper)
 wide_depth  = 34;     // depth at widest station
 tail_depth  = 23.5;   // depth at tail
 
 /* [Crown/Back Roundness] */
 crown_height = 18;     // peak crown height
-nose_peak_power = 2.4; // >1 = flatter near nose, sharper near center (wedge-like top)
+nose_peak_power = 1.35; // lower value gives cleaner top slope toward tip
 
 /* [Side Wings] */
 wing_x_pos = 55;         // X position of wing attachment (along body)
