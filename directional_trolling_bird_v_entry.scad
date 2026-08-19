@@ -23,16 +23,16 @@ tail_width   = 15;    // body width at tail  (default = nose_width)
 nose_width_power = 1.15;   // >1 narrows faster near nose for a sharper taper
 
 /* [Nose Entry Tuning] */
-nose_entry_len   = 26;   // longer V-entry zone for straighter wedge nose
-nose_entry_frac  = 0.18; // less early depth build to reduce nose bulge
+nose_entry_len   = 34;   // longer V-entry zone for straighter wedge nose and smoother belly climb
+nose_entry_frac  = 0.12; // less early depth build to reduce nose bulge
 
 /* [Nose Chine Line Tuning] */
-chine_len = 55;          // length of straight-ish chine region from nose
-chine_drop = 0.72;       // fraction of local depth reached by chine at chine_len
-chine_blend_power = 0.9; // near-linear side profile along chine
+chine_len = 72;          // extend straight-ish chine influence farther from nose
+chine_drop = 0.60;       // shallower chine to lift belly line toward target
+chine_blend_power = 0.65; // faster early blend for more linear underside taper
 
 /* [Belly Shape Tuning] */
-belly_shape_power = 1.9; // lower value reduces shoulder bulge and straightens taper
+belly_shape_power = 1.35; // lower value smooths underside and removes dip-then-swell look
 
 /* [Belly Depth] */
 nose_depth  = 12.5;   // depth at nose tip (reduced for cleaner taper)
