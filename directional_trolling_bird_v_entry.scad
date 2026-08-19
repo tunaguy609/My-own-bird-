@@ -26,6 +26,11 @@ nose_width_power = 1.15;   // >1 narrows faster near nose for a sharper taper
 nose_entry_len   = 34;   // longer V-entry zone for straighter wedge nose and smoother belly climb
 nose_entry_frac  = 0.12; // less early depth build to reduce nose bulge
 
+/* [Nose Belly Line (Structural)] */
+nose_belly_line_end_x = 70;     // x station where forced straight belly-line influence ends
+nose_belly_line_lift = 0.42;    // 0..1: fraction of local depth at end station (higher = steeper rise)
+nose_belly_straightness = 1.0;  // 0..1 blend from rounded belly to straight belly-line target
+
 /* [Nose Chine Line Tuning] */
 chine_len = 72;          // extend straight-ish chine influence farther from nose
 chine_drop = 0.60;       // shallower chine to lift belly line toward target
@@ -93,6 +98,17 @@ function chine_target_depth(x, d_local) =
     ? d_local * chine_drop * pow(clamp01(x / chine_len), chine_blend_power)
     : d_local;
 
+// Structural belly rocker target in side-view for nose region
+function belly_line_at_x(x) =
+    let(t = clamp01(x / nose_belly_line_end_x),
+        z_end = -body_depth(nose_belly_line_end_x) * nose_belly_line_lift)
+    (x <= nose_belly_line_end_x)
+    ? -nose_depth + (-z_end + nose_depth) * t
+    : -body_depth(x);
+
+// Blend factor for applying structural belly line near center-bottom of section
+function belly_line_influence(s) = smoothstep(pow(s, 0.75));
+
 // BODY MODULE - ROUNDED BACK PROFILE
 N_body = 64;
 
@@ -100,14 +116,18 @@ module body_profile_2d(hw, d, cr, cx) {
     N = 36;
 
     d_ch = chine_target_depth(cx, d);
+    z_line = belly_line_at_x(cx);
 
     belly = [for (i = [0 : N])
         let(a = 180 * i / N,
             s = max(0, sin(a)),
             z_round = -d * pow(s, belly_shape_power),
             z_chine = -d_ch * pow(s, 0.9),
-            w = smoothstep(s))
-        [hw * cos(a), (1 - w) * z_chine + w * z_round]
+            w = smoothstep(s),
+            z_base = (1 - w) * z_chine + w * z_round,
+            nblend = nose_belly_straightness * (1 - smoothstep(cx / nose_belly_line_end_x)) * belly_line_influence(s),
+            z_final = (1 - nblend) * z_base + nblend * z_line)
+        [hw * cos(a), z_final]
     ];
 
     back = [for (i = [0 : N])
