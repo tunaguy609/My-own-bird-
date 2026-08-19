@@ -24,12 +24,12 @@ nose_width_power = 1.15;   // >1 narrows faster near nose for a sharper taper
 
 /* [Nose Entry Tuning] */
 nose_entry_len   = 34;   // longer V-entry zone for straighter wedge nose and smoother belly climb
-nose_entry_frac  = 0.12; // less early depth build to reduce nose bulge
+nose_entry_frac  = 0.28; // increased early depth build for fuller front body
 
 /* [Nose Belly Line (Structural)] */
 nose_belly_line_end_x = 70;     // x station where forced straight belly-line influence ends
-nose_belly_line_lift = 0.42;    // 0..1: fraction of local depth at end station (higher = steeper rise)
-nose_belly_straightness = 1.0;  // 0..1 blend from rounded belly to straight belly-line target
+nose_belly_line_lift = 0.30;    // reduced upward pull for fuller underside
+nose_belly_straightness = 0.35; // reduce forced straight-line belly so body fills out
 
 /* [Nose Chine Line Tuning] */
 chine_len = 72;          // extend straight-ish chine influence farther from nose
@@ -37,10 +37,10 @@ chine_drop = 0.60;       // shallower chine to lift belly line toward target
 chine_blend_power = 0.65; // faster early blend for more linear underside taper
 
 /* [Belly Shape Tuning] */
-belly_shape_power = 1.35; // lower value smooths underside and removes dip-then-swell look
+belly_shape_power = 2.4; // fuller belly section to better match reference bait profile
 
 /* [Belly Depth] */
-nose_depth  = 12.5;   // depth at nose tip (reduced for cleaner taper)
+nose_depth  = 14.5;   // slightly deeper nose for fuller front belly
 wide_depth  = 34;     // depth at widest station
 tail_depth  = 23.5;   // depth at tail
 
